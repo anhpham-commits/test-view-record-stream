@@ -1,0 +1,79 @@
+/* =========================================================
+   GLOBAL & LAYOUT CONTAINER (Bố cục gốc viewStream)
+   ========================================================= */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+}
+
+.container{
+    display:flex;
+    width:100%;
+    height:100vh;
+}
+
+.viewer{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    border-right:1px solid #888;
+}
+
+.viewer:last-child{
+    border-right:none;
+}
+
+.toolbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px;
+    background:#e8e8e8;
+}
+
+.toolbar input{
+    flex:1;
+    padding:8px;
+    font-size:14px;
+}
+
+.toolbar #btnConnect{
+    width:120px;
+    padding:8px;
+}
+
+/* =========================================================
+   STATS BUTTON & ICON (Tách CSS riêng cho icon, không phụ thuộc font-awesome)
+   ========================================================= */
+
+#statsButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    color: inherit;
+    border: none;
+    cursor: pointer;
+}
+
+#statsButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.stats-icon {
+    width: 18px;
+    height: 18px;
+    fill: currentColor;
+}
