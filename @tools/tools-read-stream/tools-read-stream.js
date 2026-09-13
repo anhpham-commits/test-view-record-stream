@@ -10,6 +10,10 @@ export default class LeanbotFarmRunStreamView{
     #reader = null;
     #runSnapshotShown = false;
 
+    // RECORDING
+    #recorder = null;
+    #recordingWritable = null;
+
     onStreamConnect = () => {}
     onStreamDisconect = () => {}
     onStreamConnectError = () => {}
@@ -218,6 +222,157 @@ export default class LeanbotFarmRunStreamView{
 
         // Reset UI về trạng thái ban đầu
         this.#setVideoView("placeholder");
+    }
+
+    /* =========================================================
+    RECORDING
+    ========================================================= */
+
+    isRecording() {
+        return this.#recorder !== null &&
+            this.#recorder.state === "recording";
+    }
+
+    async recordStart(fileName = null) {
+        if (!this.#connected || !this.#remoteVideo.srcObject) {
+            throw new Error("Stream is not connected");
+        }
+
+        if (this.isRecording()) {
+            throw new Error("Recording is already running");
+        }
+
+        if (!window.showSaveFilePicker) {
+            throw new Error("File System Access API is not supported");
+        }
+
+        // Prefer MP4 if MediaRecorder supports it
+        let mimeType;
+        let extension;
+
+        if (MediaRecorder.isTypeSupported("video/mp4")) {
+            mimeType = "video/mp4";
+            extension = ".mp4";
+
+            console.log("[RECORD] video/mp4 is supported, using MP4");
+        } else if (MediaRecorder.isTypeSupported("video/webm")) {
+            mimeType = "video/webm";
+            extension = ".webm";
+
+            console.log("[RECORD] video/mp4 is not supported, falling back to WebM");
+        } else {
+            throw new Error("No supported MediaRecorder video format found");
+        }
+
+        if (!fileName) {
+            fileName = `leanbot-recording${extension}`;
+        } else {
+            // Nếu caller không truyền extension thì thêm extension phù hợp
+            if (!fileName.includes(".")) {
+                fileName += extension;
+            }
+        }
+
+        const handle = await window.showSaveFilePicker({
+            suggestedName: fileName,
+            types: [
+                {
+                    description: mimeType === "video/mp4"
+                        ? "MP4 video"
+                        : "WebM video",
+                    accept: {
+                        [mimeType]: [extension]
+                    }
+                }
+            ]
+        });
+
+        const writable = await handle.createWritable();
+
+        try {
+            const stream = this.#remoteVideo.srcObject;
+
+            const recorder = new MediaRecorder(stream, {
+                mimeType: mimeType
+            });
+
+            recorder.ondataavailable = async (event) => {
+                if (event.data.size > 0) {
+                    try {
+                        await writable.write(event.data);
+                    } catch (error) {
+                        console.error(
+                            "[RECORD] Failed to write recording data:",
+                            error
+                        );
+                    }
+                }
+            };
+
+            recorder.onerror = (event) => {
+                console.error(
+                    "[RECORD] MediaRecorder error:",
+                    event.error
+                );
+            };
+
+            recorder.onstop = async () => {
+                try {
+                    await writable.close();
+                    console.log("[RECORD] Recording file saved");
+                } catch (error) {
+                    console.error(
+                        "[RECORD] Failed to close recording file:",
+                        error
+                    );
+                }
+
+                this.#recorder = null;
+                this.#recordingWritable = null;
+            };
+
+            this.#recorder = recorder;
+            this.#recordingWritable = writable;
+
+            recorder.start(1000);
+
+            console.log(
+                `[RECORD] Recording started (${mimeType})`
+            );
+        } catch (error) {
+            await writable.close().catch(() => {});
+            throw error;
+        }
+    }
+
+    async recordStop() {
+        if (!this.#recorder) {
+            return;
+        }
+
+        if (this.#recorder.state === "inactive") {
+            return;
+        }
+
+        console.log("[RECORD] Stopping recording");
+
+        return new Promise((resolve) => {
+            const recorder = this.#recorder;
+
+            const onStop = recorder.onstop;
+
+            recorder.onstop = async (event) => {
+                try {
+                    if (onStop) {
+                        await onStop.call(recorder, event);
+                    }
+                } finally {
+                    resolve();
+                }
+            };
+
+            recorder.stop();
+        });
     }
 
 }
