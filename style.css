@@ -45,9 +45,9 @@ html,body{
     font-size:14px;
 }
 
-.toolbar #btnConnect{
-    width:120px;
-    padding:8px;
+.toolbar button {
+    width: 120px;
+    padding: 8px;
 }
 
 /* =========================================================
