@@ -292,7 +292,15 @@ export default class LeanbotFarmRunStreamView{
         try {
             const stream = this.#remoteVideo.srcObject;
 
-            const recorder = new MediaRecorder(stream, {
+            // const recorder = new MediaRecorder(stream, { // both audio and video
+            //     mimeType: mimeType
+            // });
+
+            const videoStream = new MediaStream(
+                stream.getVideoTracks()
+            );
+
+            const recorder = new MediaRecorder(videoStream, {
                 mimeType: mimeType
             });
 
