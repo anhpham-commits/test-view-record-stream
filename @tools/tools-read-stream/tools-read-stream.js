@@ -193,7 +193,6 @@ export default class LeanbotFarmRunStreamView{
     #disconnectStream() {
         if (this.#reader !== null) {
             try {
-                stopMonitorStreamStats();
                 this.#reader.close();
             } catch (error) {
                 console.warn("[STREAM] Error closing MediaMTX reader:", error);
