@@ -160,13 +160,14 @@ export default class LeanbotFarmRunStreamView{
 
         this.#qualityPopup = document.createElement("div");
         this.#qualityPopup.id = "streamQualityPopup";
-        this.#qualityPopup.className = "stream-quality-popup";
         this.#qualityPopup.innerHTML = `
-            <div class="stream-quality-header">
-                <h6>Stream Quality</h6>
-                <button class="stream-quality-close" type="button" aria-label="Close stream quality">×</button>
+            <div class="stream-quality-popup">
+                <div class="stream-quality-header">
+                    <h6>Stream Quality</h6>
+                    <button class="stream-quality-close" type="button" aria-label="Close stream quality">×</button>
+                </div>
+                <pre class="stream-quality-content"></pre>
             </div>
-            <pre class="stream-quality-content"></pre>
         `;
 
         this.#qualityCloseButton = this.#qualityPopup.querySelector(".stream-quality-close");
