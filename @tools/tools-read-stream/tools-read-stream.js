@@ -11,14 +11,18 @@ class StreamStats {
     }
 
     measure(stats) {
-        if (!Array.isArray(stats)) {
+        if (!stats || typeof stats.forEach !== "function") {
             return null;
         }
 
         let currentInbound = null;
 
         stats.forEach(report => {
-            if (report.type === "inbound-rtp" && report.kind === "video") {
+            const isVideoInbound =
+                (report.type === "inbound-rtp" && report.kind === "video") ||
+                (report.type === "inbound-rtp" && report.mediaType === "video");
+
+            if (isVideoInbound) {
                 currentInbound = report;
             }
         });
