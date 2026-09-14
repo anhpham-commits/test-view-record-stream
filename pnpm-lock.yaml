@@ -176,6 +176,9 @@ importers:
       tippy.js:
         specifier: ^6.3.7
         version: 6.3.7
+      ts-ebml:
+        specifier: ^3.0.2
+        version: 3.0.2
       ts-loader:
         specifier: 9.6.2
         version: 9.6.2(loader-utils@2.0.4)(typescript@4.9.5)(webpack@5.109.2)
@@ -1744,6 +1747,10 @@ packages:
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
 
+  buffers@0.1.1:
+    resolution: {integrity: sha512-9q/rDEGSb/Qsvv2qvzIzdluL5k7AaJOTrw23z9reQthrbF7is4CtlT0DXyO1oei2DCp4uojjzQ7igaSHp1kAEQ==}
+    engines: {node: '>=0.2.0'}
+
   builtin-status-codes@3.0.0:
     resolution: {integrity: sha512-HpGFw18DgFWlncDfjTa2rcQ4W88O1mC8e8yZ2AvQY5KDaktSTwo+KRf6nHK6FRI5FyRyb/5T6+TSxfP7QyGsmQ==}
 
@@ -1899,6 +1906,10 @@ packages:
   commander@10.0.1:
     resolution: {integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==}
     engines: {node: '>=14'}
+
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
 
   commander@14.0.3:
     resolution: {integrity: sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw==}
@@ -2288,6 +2299,14 @@ packages:
       supports-color:
         optional: true
 
+  debug@3.1.0:
+    resolution: {integrity: sha512-OX8XqP7/1a9cqkxYw2yXss15f26NKWBpDXQd0/uK/KPqdQhxbPa994hnzjcE2VqQpDslf55723cKPUOGSmMY3g==}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
@@ -2424,6 +2443,13 @@ packages:
   easy-stack@1.0.1:
     resolution: {integrity: sha512-wK2sCs4feiiJeFXn3zvY0p41mdU5VUgbgs1rNsc/y5ngFUijdWd+iIN8eoyuZHKB8xN6BL4PdWmzqFmxNg6V2w==}
     engines: {node: '>=6.0.0'}
+
+  ebml-block@1.1.2:
+    resolution: {integrity: sha512-HgNlIsRFP6D9VKU5atCeHRJY7XkJP8bOe8yEhd8NB7B3b4++VWTyauz6g650iiPmLfPLGlVpoJmGSgMfXDYusg==}
+
+  ebml@3.0.0:
+    resolution: {integrity: sha512-Q6C1u4/TX1nYipT9HNIopp95YyyyI0zs1GXdNRKO7XL7k+oo+ZtDc1CaJjpCdmlLxWsnlKBOXJCXkYU0K/Anlg==}
+    engines: {node: '>= 6.4'}
 
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
@@ -3140,6 +3166,9 @@ packages:
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
 
+  int64-buffer@1.1.2:
+    resolution: {integrity: sha512-ZBb2qDtapL5lWiwgXIoNaCRb/OBPrQ6bK6J4p1AcPXzH/JA/eZmoTVCGGCOIQWIsWwOExGsPu5n8+aBG6itMzA==}
+
   internal-slot@1.1.0:
     resolution: {integrity: sha512-4gd7VpWNQNB4UKKCFFVcp1AVv+FMOgs9NKzjHKusc8jTMhd5eL1NqQqOpE0KzMds804/yHlglp3uxgluOqAPLw==}
     engines: {node: '>= 0.4'}
@@ -3627,6 +3656,9 @@ packages:
 
   math-random@1.0.4:
     resolution: {integrity: sha512-rUxjysqif/BZQH2yhd5Aaq7vXMSx9NdEsQcyA07uEzIvxgI7zIr33gGsh+RU0/XjmQpCW7RsVof1vlkvQVCK5A==}
+
+  matroska-schema@2.1.0:
+    resolution: {integrity: sha512-6c1oFmDxf4Vc5J5lA+9wO7TKcw5M1w85HfzFhAFT4OuEUuqp/s/jqqC3OKlaWe1YwN5wTThJyTC7iwhyW7kQdg==}
 
   mdn-data@2.0.14:
     resolution: {integrity: sha512-dn6wd0uw5GsdswPFfsgMp5NSB0/aDe6fK94YJV/AJDYXL6HVLWBsxeq7js7Ad+mU2K9LAlwpk6kN2D5mwCPVow==}
@@ -5129,6 +5161,10 @@ packages:
 
   tr46@0.0.3:
     resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
+
+  ts-ebml@3.0.2:
+    resolution: {integrity: sha512-Br6DA/YbdpsiSQjc0KaF3ASQtkk3MCiA4q5kIA7ptv6adZa/MdYa2TXAXF2bAzRZIMWfyFEC9Gicr3nb51MgDA==}
+    hasBin: true
 
   ts-loader@9.6.2:
     resolution: {integrity: sha512-R4iuczmtgxvtuI556s+hTZ6/7Ee03VCAk/l/M8LY1OAsUgB7YydsCxkgq9D9pKRaD7GJqUi2u8fp9zZP/ufjKA==}
@@ -7686,6 +7722,8 @@ snapshots:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
+  buffers@0.1.1: {}
+
   builtin-status-codes@3.0.0: {}
 
   bytes@3.1.2: {}
@@ -7879,6 +7917,8 @@ snapshots:
       delayed-stream: 1.0.0
 
   commander@10.0.1: {}
+
+  commander@12.1.0: {}
 
   commander@14.0.3: {}
 
@@ -8143,6 +8183,10 @@ snapshots:
     optionalDependencies:
       supports-color: 3.2.3
 
+  debug@3.1.0:
+    dependencies:
+      ms: 2.0.0
+
   debug@4.4.3:
     dependencies:
       ms: 2.1.3
@@ -8271,6 +8315,15 @@ snapshots:
   duplexer@0.1.2: {}
 
   easy-stack@1.0.1: {}
+
+  ebml-block@1.1.2: {}
+
+  ebml@3.0.0:
+    dependencies:
+      buffers: 0.1.1
+      debug: 3.1.0
+    transitivePeerDependencies:
+      - supports-color
 
   ee-first@1.1.1: {}
 
@@ -9142,6 +9195,8 @@ snapshots:
 
   inherits@2.0.4: {}
 
+  int64-buffer@1.1.2: {}
+
   internal-slot@1.1.0:
     dependencies:
       es-errors: 1.3.0
@@ -9584,6 +9639,8 @@ snapshots:
   math-intrinsics@1.1.0: {}
 
   math-random@1.0.4: {}
+
+  matroska-schema@2.1.0: {}
 
   mdn-data@2.0.14: {}
 
@@ -11112,6 +11169,17 @@ snapshots:
   totalist@3.0.1: {}
 
   tr46@0.0.3: {}
+
+  ts-ebml@3.0.2:
+    dependencies:
+      commander: 12.1.0
+      ebml: 3.0.0
+      ebml-block: 1.1.2
+      events: 3.3.0
+      int64-buffer: 1.1.2
+      matroska-schema: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
 
   ts-loader@9.6.2(loader-utils@2.0.4)(typescript@4.9.5)(webpack@5.109.2):
     dependencies:

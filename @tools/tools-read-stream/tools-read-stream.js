@@ -413,21 +413,25 @@ export default class LeanbotFarmRunStreamView{
             throw new Error("File System Access API is not supported");
         }
 
-        let mimeType;
-        let extension;
-
-        if (MediaRecorder.isTypeSupported("video/mp4")) {
-            mimeType = "video/mp4";
-            extension = ".mp4";
-        } else if (MediaRecorder.isTypeSupported("video/webm")) {
-            mimeType = "video/webm";
-            extension = ".webm";
-        } else {
-            throw new Error("No supported MediaRecorder video format found");
+        if (!MediaRecorder.isTypeSupported("video/webm")) {
+            throw new Error("WebM recording is not supported in this browser");
         }
 
+        const mimeType = "video/webm";
+        const extension = ".webm";
+
         if (!fileName) {
-            fileName = `leanbot-recording${extension}`;
+            const now = new Date();
+            const timestamp = [
+                now.getFullYear(),
+                String(now.getMonth() + 1).padStart(2, "0"),
+                String(now.getDate()).padStart(2, "0")
+            ].join("-") + "_" + [
+                String(now.getHours()).padStart(2, "0"),
+                String(now.getMinutes()).padStart(2, "0"),
+                String(now.getSeconds()).padStart(2, "0")
+            ].join("-");
+            fileName = `leanbot-recording-${timestamp}${extension}`;
         } else if (!fileName.includes(".")) {
             fileName += extension;
         }
@@ -436,7 +440,7 @@ export default class LeanbotFarmRunStreamView{
             suggestedName: fileName,
             types: [
                 {
-                    description: mimeType === "video/mp4" ? "MP4 video" : "WebM video",
+                    description: "WebM video",
                     accept: {
                         [mimeType]: [extension]
                     }
@@ -519,6 +523,31 @@ export default class LeanbotFarmRunStreamView{
             recorder.stop();
         });
     }
+}
+
+function getSeekableBlob(inputBlob, callback) {
+    // EBML.js copyrights goes to: https://github.com/legokichi/ts-ebml
+    if (typeof EBML === 'undefined') {
+        throw new Error('Please link: https://cdn.webrtc-experiment.com/EBML.js');
+    }
+    var reader = new EBML.Reader();
+    var decoder = new EBML.Decoder();
+    var tools = EBML.tools;
+    var fileReader = new FileReader();
+    fileReader.onload = function(e) {
+        var ebmlElms = decoder.decode(this.result);
+        ebmlElms.forEach(function(element) {
+            reader.read(element);
+        });
+        reader.stop();
+        var refinedMetadataBuf = tools.makeMetadataSeekable(reader.metadatas, reader.duration, reader.cues);
+        var body = this.result.slice(reader.metadataSize);
+        var newBlob = new Blob([refinedMetadataBuf, body], {
+            type: 'video/webm'
+        });
+        callback(newBlob);
+    };
+    fileReader.readAsArrayBuffer(inputBlob);
 }
 
 
