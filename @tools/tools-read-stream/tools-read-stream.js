@@ -1,6 +1,5 @@
 import "./tools-read-stream.css"
 import './reader.js'
-import * as EBML from "ts-ebml";
 
 export default class LeanbotFarmRunStreamView{
     #remoteVideo;
@@ -21,8 +20,6 @@ export default class LeanbotFarmRunStreamView{
     // RECORDING
     #recorder = null;
     #recordingWritable = null;
-    #recordingFileHandle = null;
-    #recordingWriteQueue = Promise.resolve();
 
     onStreamConnect = () => {}
     onStreamDisconect = () => {}
@@ -452,8 +449,6 @@ export default class LeanbotFarmRunStreamView{
         });
 
         const writable = await handle.createWritable();
-        this.#recordingFileHandle = handle;
-        this.#recordingWriteQueue = Promise.resolve();
 
         try {
             const stream = this.#remoteVideo.srcObject;
@@ -465,14 +460,8 @@ export default class LeanbotFarmRunStreamView{
 
             recorder.ondataavailable = async (event) => {
                 if (event.data.size > 0) {
-                    const writeChunk = async () => {
-                        await writable.write(event.data);
-                    };
-
-                    this.#recordingWriteQueue = this.#recordingWriteQueue.then(writeChunk, writeChunk);
-
                     try {
-                        await this.#recordingWriteQueue;
+                        await writable.write(event.data);
                     } catch (error) {
                         console.error("[RECORD] Failed to write recording data:", error);
                     }
@@ -483,6 +472,18 @@ export default class LeanbotFarmRunStreamView{
                 console.error("[RECORD] MediaRecorder error:", event.error);
             };
 
+            recorder.onstop = async () => {
+                try {
+                    await writable.close();
+                    console.log("[RECORD] Recording file saved");
+                } catch (error) {
+                    console.error("[RECORD] Failed to close recording file:", error);
+                }
+
+                this.#recorder = null;
+                this.#recordingWritable = null;
+            };
+
             this.#recorder = recorder;
             this.#recordingWritable = writable;
 
@@ -490,108 +491,36 @@ export default class LeanbotFarmRunStreamView{
             console.log(`[RECORD] Recording started (${mimeType})`);
         } catch (error) {
             await writable.close().catch(() => {});
-            this.#recordingFileHandle = null;
-            this.#recordingWritable = null;
             throw error;
         }
     }
 
     async recordStop() {
         if (!this.#recorder) {
-            return null;
+            return;
         }
 
         if (this.#recorder.state === "inactive") {
-            return null;
+            return;
         }
 
         console.log("[RECORD] Stopping recording");
 
-        const recorder = this.#recorder;
-        const writable = this.#recordingWritable;
-        const fileHandle = this.#recordingFileHandle;
-        const onStop = recorder.onstop;
+        return new Promise((resolve) => {
+            const recorder = this.#recorder;
+            const onStop = recorder.onstop;
 
-        const finalFile = await new Promise((resolve, reject) => {
             recorder.onstop = async (event) => {
                 try {
                     if (onStop) {
                         await onStop.call(recorder, event);
                     }
-
-                    if (writable) {
-                        await this.#recordingWriteQueue.catch(() => {});
-                        await writable.close().catch(() => {});
-                    }
-
-                    let rawFile = null;
-                    if (fileHandle) {
-                        rawFile = await fileHandle.getFile().catch(() => null);
-                    }
-
-                    let fileToWrite = rawFile;
-                    if (rawFile && rawFile.size > 0) {
-                        try {
-                            fileToWrite = await makeSeekableWebM(rawFile);
-                            console.log("[RECORD] WebM finalized for seekability");
-                        } catch (error) {
-                            console.error("[RECORD] Failed to finalize seekable WebM:", error);
-                            fileToWrite = rawFile;
-                        }
-                    }
-
-                    if (fileHandle && fileToWrite) {
-                        const replaceWritable = await fileHandle.createWritable();
-                        await replaceWritable.write(fileToWrite);
-                        await replaceWritable.close();
-                        resolve(await fileHandle.getFile().catch(() => fileToWrite));
-                        return;
-                    }
-
-                    resolve(rawFile);
-                } catch (error) {
-                    console.error("[RECORD] Failed to finalize recording:", error);
-                    reject(error);
                 } finally {
-                    this.#recorder = null;
-                    this.#recordingWritable = null;
-                    this.#recordingFileHandle = null;
-                    this.#recordingWriteQueue = Promise.resolve();
+                    resolve();
                 }
             };
 
-            try {
-                recorder.stop();
-            } catch (error) {
-                reject(error);
-            }
+            recorder.stop();
         });
-
-        return finalFile;
     }
-}
-
-async function makeSeekableWebM(inputFile) {
-    const fileBuffer = await inputFile.arrayBuffer();
-    const reader = new EBML.Reader();
-    const decoder = new EBML.Decoder();
-
-    const ebmlElements = decoder.decode(fileBuffer);
-    ebmlElements.forEach((element) => {
-        reader.read(element);
-    });
-    reader.stop();
-
-    const metadataBuffer = EBML.tools.makeMetadataSeekable(
-        reader.metadatas,
-        reader.duration,
-        reader.cues
-    );
-    const body = fileBuffer.slice(reader.metadataSize);
-    const seekableBlob = new Blob([metadataBuffer, body], { type: "video/webm" });
-
-    return new File([seekableBlob], inputFile.name || "leanbot-recording.webm", {
-        type: "video/webm",
-        lastModified: Date.now()
-    });
 }
