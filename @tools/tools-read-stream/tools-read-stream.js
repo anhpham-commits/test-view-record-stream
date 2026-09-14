@@ -1,110 +1,6 @@
 import "./tools-read-stream.css"
 import './reader.js'
 
-class StreamStats {
-    constructor() {
-        this.inbound_rtp = null;
-    }
-
-    reset() {
-        this.inbound_rtp = null;
-    }
-
-    measure(stats) {
-        if (!stats || typeof stats.forEach !== "function") {
-            return null;
-        }
-
-        let currentInbound = null;
-
-        stats.forEach(report => {
-            const isVideoInbound =
-                (report.type === "inbound-rtp" && report.kind === "video") ||
-                (report.type === "inbound-rtp" && report.mediaType === "video");
-
-            if (isVideoInbound) {
-                currentInbound = report;
-            }
-        });
-
-        if (!currentInbound) {
-            return null;
-        }
-
-        if (!this.inbound_rtp) {
-            this.inbound_rtp = currentInbound;
-            return null;
-        }
-
-        const prev = this.inbound_rtp;
-        const timeDelta = (currentInbound.timestamp - prev.timestamp) / 1000;
-
-        if (!Number.isFinite(timeDelta) || timeDelta <= 0) {
-            this.inbound_rtp = currentInbound;
-            return null;
-        }
-
-        const bytesDelta = currentInbound.bytesReceived - prev.bytesReceived;
-        const packetsLostDelta = currentInbound.packetsLost - prev.packetsLost;
-        const packetsReceivedDelta = currentInbound.packetsReceived - prev.packetsReceived;
-        const framesDecodedDelta = currentInbound.framesDecoded - prev.framesDecoded;
-
-        const bitrate = (bytesDelta * 8) / timeDelta / 1000;
-        const packetLoss = packetsLostDelta / (packetsLostDelta + packetsReceivedDelta || 1);
-        const jitter = currentInbound.jitter * 1000;
-        const framesDecodedPerSecond = framesDecodedDelta / timeDelta;
-        const isFrozen = bitrate > 10 && framesDecodedDelta === 0;
-
-        const result = {
-            timeDelta,
-            bitrate,
-            packetLoss,
-            jitter,
-            framesDecodedPerSecond,
-            isFrozen,
-            frameWidth: currentInbound.frameWidth,
-            frameHeight: currentInbound.frameHeight,
-            framesDropped_cumulative: currentInbound.framesDropped,
-            freezeCount_cumulative: currentInbound.freezeCount,
-            totalFreezesDuration_cumulative: currentInbound.totalFreezesDuration,
-            framesDecoded_cumulative: currentInbound.framesDecoded,
-            packetsReceived_cumulative: currentInbound.packetsReceived,
-            packetsLost_cumulative: currentInbound.packetsLost,
-            bytesReceived_cumulative: currentInbound.bytesReceived
-        };
-
-        this.inbound_rtp = currentInbound;
-        return result;
-    }
-
-    format(result) {
-        if (!result) return "No result";
-
-        const direct = [
-            `frameWidth: ${result.frameWidth} px`,
-            `frameHeight: ${result.frameHeight} px`,
-            `jitter: ${result.jitter} ms`,
-            `framesDropped_cumulative: ${result.framesDropped_cumulative} frames`,
-            `freezeCount_cumulative: ${result.freezeCount_cumulative}`,
-            `totalFreezesDuration_cumulative: ${result.totalFreezesDuration_cumulative} s`,
-            `framesDecoded_cumulative: ${result.framesDecoded_cumulative} frames`,
-            `packetsReceived_cumulative: ${result.packetsReceived_cumulative} packets`,
-            `packetsLost_cumulative: ${result.packetsLost_cumulative} packets`,
-            `bytesReceived_cumulative: ${result.bytesReceived_cumulative} bytes`
-        ];
-
-        const derived = [
-            `timeDelta: ${result.timeDelta.toFixed(3)} s`,
-            `bitrate: ${result.bitrate.toFixed(3)} Kbps`,
-            `packetLoss: ${result.packetLoss}`,
-            `framesDecodedPerSecond: ${result.framesDecodedPerSecond.toFixed(3)} fps`,
-            `isFrozen: ${result.isFrozen}`
-        ];
-
-        return direct.concat([""], derived).join("\n");
-    }
-}
-
 export default class LeanbotFarmRunStreamView{
     #remoteVideo;
     #snapshotCanvas;
@@ -112,7 +8,9 @@ export default class LeanbotFarmRunStreamView{
     #qualityPopup;
     #qualityContent;
     #qualityCloseButton;
-    #qualityStats;
+    #qualityStats = {
+        inbound_rtp: null
+    };
     #qualityStatsInterval = null;
 
     #connected = false;
@@ -176,7 +74,7 @@ export default class LeanbotFarmRunStreamView{
 
         this.#qualityCloseButton = this.#qualityPopup.querySelector(".stream-quality-close");
         this.#qualityContent = this.#qualityPopup.querySelector(".stream-quality-content");
-        this.#qualityStats = new StreamStats();
+        this.#resetQualityStats();
 
         this.#qualityCloseButton.addEventListener("click", () => {
             this.hideQualityPopup();
@@ -240,6 +138,107 @@ export default class LeanbotFarmRunStreamView{
         this.#setVideoView("video");
     }
 
+    #resetQualityStats() {
+        this.#qualityStats.inbound_rtp = null;
+        this.#updateQualityContent("");
+    }
+
+    #measureQualityStats(stats) {
+        if (!stats || typeof stats.forEach !== "function") {
+            return null;
+        }
+
+        let currentInbound = null;
+
+        stats.forEach(report => {
+            const isVideoInbound =
+                (report.type === "inbound-rtp" && report.kind === "video") ||
+                (report.type === "inbound-rtp" && report.mediaType === "video");
+
+            if (isVideoInbound) {
+                currentInbound = report;
+            }
+        });
+
+        if (!currentInbound) {
+            return null;
+        }
+
+        if (!this.#qualityStats.inbound_rtp) {
+            this.#qualityStats.inbound_rtp = currentInbound;
+            return null;
+        }
+
+        const prev = this.#qualityStats.inbound_rtp;
+        const timeDelta = (currentInbound.timestamp - prev.timestamp) / 1000;
+
+        if (!Number.isFinite(timeDelta) || timeDelta <= 0) {
+            this.#qualityStats.inbound_rtp = currentInbound;
+            return null;
+        }
+
+        const bytesDelta = currentInbound.bytesReceived - prev.bytesReceived;
+        const packetsLostDelta = currentInbound.packetsLost - prev.packetsLost;
+        const packetsReceivedDelta = currentInbound.packetsReceived - prev.packetsReceived;
+        const framesDecodedDelta = currentInbound.framesDecoded - prev.framesDecoded;
+
+        const bitrate = (bytesDelta * 8) / timeDelta / 1000;
+        const packetLoss = (packetsLostDelta + packetsReceivedDelta) > 0
+            ? packetsLostDelta / (packetsLostDelta + packetsReceivedDelta)
+            : 0;
+        const jitter = currentInbound.jitter * 1000;
+        const framesDecodedPerSecond = framesDecodedDelta / timeDelta;
+        const isFrozen = bitrate > 10 && framesDecodedDelta === 0;
+
+        const result = {
+            timeDelta,
+            bitrate,
+            packetLoss,
+            jitter,
+            framesDecodedPerSecond,
+            isFrozen,
+            frameWidth: currentInbound.frameWidth,
+            frameHeight: currentInbound.frameHeight,
+            framesDropped_cumulative: currentInbound.framesDropped,
+            freezeCount_cumulative: currentInbound.freezeCount,
+            totalFreezesDuration_cumulative: currentInbound.totalFreezesDuration,
+            framesDecoded_cumulative: currentInbound.framesDecoded,
+            packetsReceived_cumulative: currentInbound.packetsReceived,
+            packetsLost_cumulative: currentInbound.packetsLost,
+            bytesReceived_cumulative: currentInbound.bytesReceived
+        };
+
+        this.#qualityStats.inbound_rtp = currentInbound;
+        return result;
+    }
+
+    #formatQualityStats(result) {
+        if (!result) return "Waiting for stats...";
+
+        const direct = [
+            `frameWidth: ${result.frameWidth} px`,
+            `frameHeight: ${result.frameHeight} px`,
+            `jitter: ${result.jitter} ms`,
+            `framesDropped_cumulative: ${result.framesDropped_cumulative} frames`,
+            `freezeCount_cumulative: ${result.freezeCount_cumulative}`,
+            `totalFreezesDuration_cumulative: ${result.totalFreezesDuration_cumulative} s`,
+            `framesDecoded_cumulative: ${result.framesDecoded_cumulative} frames`,
+            `packetsReceived_cumulative: ${result.packetsReceived_cumulative} packets`,
+            `packetsLost_cumulative: ${result.packetsLost_cumulative} packets`,
+            `bytesReceived_cumulative: ${result.bytesReceived_cumulative} bytes`
+        ];
+
+        const derived = [
+            `timeDelta: ${result.timeDelta.toFixed(3)} s`,
+            `bitrate: ${result.bitrate.toFixed(3)} Kbps`,
+            `packetLoss: ${result.packetLoss}`,
+            `framesDecodedPerSecond: ${result.framesDecodedPerSecond.toFixed(3)} fps`,
+            `isFrozen: ${result.isFrozen}`
+        ];
+
+        return direct.concat([""], derived).join("\n");
+    }
+
     #updateQualityContent(content) {
         if (!this.#qualityContent) return;
         this.#qualityContent.textContent = content;
@@ -253,8 +252,8 @@ export default class LeanbotFarmRunStreamView{
         this.#qualityStatsInterval = setInterval(async () => {
             try {
                 const stats = await readerInstance.getStats();
-                const result = this.#qualityStats.measure(stats);
-                const formatted = this.#qualityStats.format(result);
+                const result = this.#measureQualityStats(stats);
+                const formatted = this.#formatQualityStats(result);
                 this.#updateQualityContent(formatted);
             } catch (error) {
                 console.error("[STREAM] getStats() error:", error);
@@ -267,8 +266,7 @@ export default class LeanbotFarmRunStreamView{
 
         clearInterval(this.#qualityStatsInterval);
         this.#qualityStatsInterval = null;
-        this.#qualityStats.reset();
-        this.#updateQualityContent("");
+        this.#resetQualityStats();
         this.hideQualityPopup();
     }
 
