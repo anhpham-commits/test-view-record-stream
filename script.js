@@ -1,6 +1,5 @@
 import "./style.css"
 import LeanbotFarmRunStreamView from "./@tools/tools-read-stream/tools-read-stream.js";
-import StreamQuality from "./@tools/tools-stream-quality/stream-quality.js";
 
 /* =========================================================
    DOM & INSTANCES
@@ -21,30 +20,23 @@ const streamView = new LeanbotFarmRunStreamView("video", {
     playsinline: true
 });
 
-const streamQuality = new StreamQuality();
-
 /* =========================================================
    STATE & STREAM CALLBACKS
    ========================================================= */
 
-let streamStatsInterval = null;
-
 streamView.onStreamConnect = () => {
     setConnectButton("connected");
-
     btnRecordStart.disabled = false;
     btnRecordStop.disabled = true;
-
-    startMonitorStreamStats(streamView.getStreamReader());
+    statsButton.disabled = false;
 };
 
 streamView.onStreamConnectError = () => {
     setConnectButton("disconnected");
-
     btnRecordStart.disabled = true;
     btnRecordStop.disabled = true;
-
-    stopMonitorStreamStats();
+    statsButton.disabled = true;
+    streamView.hideQualityPopup();
 };
 
 /* =========================================================
@@ -83,46 +75,11 @@ function setConnectButton(state) {
     }
 }
 
-/* =========================================================
-   STREAM STATS MONITORING
-   ========================================================= */
-
-function resetStats() {
-    streamQuality.resetStats();
-}
-
-function startMonitorStreamStats(readerInstance) {
-    if (streamStatsInterval || !readerInstance) return;
-
-    statsButton.disabled = false;
-
-    streamStatsInterval = setInterval(async () => {
-        try {
-            const stats = await readerInstance.getStats();
-            const streamPertString = streamQuality.updateFromStats(stats);
-            console.log(streamPertString);
-        } catch (error) {
-            console.error("getStats() error:", error);
-        }
-    }, 1000);
-}
-
-function stopMonitorStreamStats() {
-    if (!streamStatsInterval) return;
-
-    clearInterval(streamStatsInterval);
-    streamStatsInterval = null;
-
-    statsButton.disabled = true;
-    streamQuality.hide();
-    resetStats();
-}
-
 statsButton.addEventListener("click", () => {
-    if (streamQuality.isVisible()) {
-        streamQuality.hide();
+    if (streamView.isQualityPopupVisible()) {
+        streamView.hideQualityPopup();
     } else {
-        streamQuality.show();
+        streamView.showQualityPopup();
     }
 });
 
@@ -171,16 +128,14 @@ async function disconnect() {
 
     btnRecordStart.disabled = true;
     btnRecordStop.disabled = true;
+    statsButton.disabled = true;
 
+    streamView.hideQualityPopup();
     streamView.disconnectStreamAndTakeSnapshot();
-
-    stopMonitorStreamStats();
     setConnectButton("disconnected");
 }
 
 function connect() {
-    stopMonitorStreamStats();
-
     const baseUrl = getStreamURL();
 
     if (!baseUrl) {
@@ -189,6 +144,8 @@ function connect() {
         return;
     }
 
+    statsButton.disabled = true;
+    streamView.hideQualityPopup();
     setConnectButton("connecting");
     streamView.connectStream(baseUrl);
 }
@@ -197,7 +154,7 @@ function connect() {
    PAGE UNLOAD
    ========================================================= */
 
-window.addEventListener("beforeunload", () => {
+globalThis.addEventListener("beforeunload", () => {
     if (streamView.isRecording()) {
         streamView.recordStop();
     }
