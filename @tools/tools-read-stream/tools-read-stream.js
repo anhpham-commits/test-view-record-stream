@@ -12,6 +12,7 @@ export default class LeanbotFarmRunStreamView{
         inbound_rtp: null
     };
     #qualityStatsInterval = null;
+    #qualitySamples = [];
 
     #connected = false;
     #reader = null;
@@ -74,6 +75,71 @@ export default class LeanbotFarmRunStreamView{
 
         this.#qualityCloseButton = this.#qualityPopup.querySelector(".stream-quality-close");
         this.#qualityContent = this.#qualityPopup.querySelector(".stream-quality-content");
+
+        const qualityPopupBox =
+            this.#qualityPopup.querySelector(".stream-quality-popup");
+
+        const qualityHeader =
+            this.#qualityPopup.querySelector(".stream-quality-header");
+
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
+
+        qualityHeader.addEventListener("pointerdown", (event) => {
+            // Không bắt đầu drag khi click vào nút Close
+            if (event.target.closest(".stream-quality-close")) {
+                return;
+            }
+
+            const rect = qualityPopupBox.getBoundingClientRect();
+
+            isDragging = true;
+
+            offsetX = event.clientX - rect.left;
+            offsetY = event.clientY - rect.top;
+
+            qualityHeader.setPointerCapture(event.pointerId);
+
+            qualityPopupBox.style.transform = "none";
+        });
+
+        qualityHeader.addEventListener("pointermove", (event) => {
+            if (!isDragging) return;
+
+            let left = event.clientX - offsetX;
+            let top = event.clientY - offsetY;
+
+            // Không cho kéo popup ra hoàn toàn khỏi màn hình
+            const rect = qualityPopupBox.getBoundingClientRect();
+
+            const minVisible = 30;
+
+            left = Math.max(
+                minVisible - rect.width,
+                Math.min(left, window.innerWidth - minVisible)
+            );
+
+            top = Math.max(
+                0,
+                Math.min(top, window.innerHeight - minVisible)
+            );
+
+            qualityPopupBox.style.left = `${left}px`;
+            qualityPopupBox.style.top = `${top}px`;
+        });
+
+        qualityHeader.addEventListener("pointerup", (event) => {
+            isDragging = false;
+
+            if (qualityHeader.hasPointerCapture(event.pointerId)) {
+                qualityHeader.releasePointerCapture(event.pointerId);
+            }
+        });
+
+        qualityHeader.addEventListener("pointercancel", () => {
+            isDragging = false;
+        });
         this.#resetQualityStats();
 
         this.#qualityCloseButton.addEventListener("click", () => {
@@ -140,6 +206,7 @@ export default class LeanbotFarmRunStreamView{
 
     #resetQualityStats() {
         this.#qualityStats.inbound_rtp = null;
+        this.#qualitySamples = [];
         this.#updateQualityContent("");
     }
 
@@ -147,6 +214,8 @@ export default class LeanbotFarmRunStreamView{
         if (!stats || typeof stats.forEach !== "function") {
             return null;
         }
+
+        const timestamp = performance.now();
 
         let currentInbound = null;
 
@@ -191,6 +260,7 @@ export default class LeanbotFarmRunStreamView{
         const isFrozen = bitrate > 10 && framesDecodedDelta === 0;
 
         const result = {
+            timestamp,
             timeDelta,
             bitrate,
             packetLoss,
@@ -212,13 +282,68 @@ export default class LeanbotFarmRunStreamView{
         return result;
     }
 
+    #getQualityAverage() {
+        if (this.#qualitySamples.length === 0) {
+            return null;
+        }
+
+        const samples = this.#qualitySamples;
+
+        const measureStats = (key) => {
+            const values = samples
+                .map(sample => sample[key])
+                .filter(value => Number.isFinite(value));
+
+            if (values.length === 0) {
+                return {
+                    avg: null,
+                    min: null,
+                    max: null
+                };
+            }
+
+            return {
+                avg: values.reduce((sum, value) => sum + value, 0) / values.length,
+                min: Math.min(...values),
+                max: Math.max(...values)
+            };
+        };
+
+        const latest = samples[samples.length - 1];
+        const first = samples[0];
+
+        const result = {
+            measurementWindow: (latest.timestamp - first.timestamp) / 1000,
+            timeDelta: latest.timeDelta,
+            bitrate: measureStats("bitrate"),
+            packetLoss: measureStats("packetLoss"),
+            jitter: measureStats("jitter"),
+            framesDecodedPerSecond: measureStats("framesDecodedPerSecond"),
+            totalFrameDecoded: latest.framesDecoded_cumulative - first.framesDecoded_cumulative,
+
+            isFrozen: samples.some(sample => sample.isFrozen),
+
+            frameWidth: latest.frameWidth,
+            frameHeight: latest.frameHeight,
+            framesDropped_cumulative: latest.framesDropped_cumulative,
+            freezeCount_cumulative: latest.freezeCount_cumulative,
+            totalFreezesDuration_cumulative: latest.totalFreezesDuration_cumulative,
+            framesDecoded_cumulative: latest.framesDecoded_cumulative,
+            packetsReceived_cumulative: latest.packetsReceived_cumulative,
+            packetsLost_cumulative: latest.packetsLost_cumulative,
+            bytesReceived_cumulative: latest.bytesReceived_cumulative,
+        };
+
+        return result;
+    }
+
     #formatQualityStats(result) {
         if (!result) return "Waiting for stats...";
 
         const direct = [
             `frameWidth: ${result.frameWidth} px`,
             `frameHeight: ${result.frameHeight} px`,
-            `jitter: ${result.jitter} ms`,
+            // `jitter: ${result.jitter} ms`,
             `framesDropped_cumulative: ${result.framesDropped_cumulative} frames`,
             `freezeCount_cumulative: ${result.freezeCount_cumulative}`,
             `totalFreezesDuration_cumulative: ${result.totalFreezesDuration_cumulative} s`,
@@ -228,12 +353,22 @@ export default class LeanbotFarmRunStreamView{
             `bytesReceived_cumulative: ${result.bytesReceived_cumulative} bytes`
         ];
 
+        const fmt = (value) => value.toFixed(3).padStart(7);
+
+        const stat = (avg, min, max) =>
+            `avg ${fmt(avg)} | min ${fmt(min)} | max ${fmt(max)}`;
+
         const derived = [
-            `timeDelta: ${result.timeDelta.toFixed(3)} s`,
-            `bitrate: ${result.bitrate.toFixed(3)} Kbps`,
-            `packetLoss: ${result.packetLoss}`,
-            `framesDecodedPerSecond: ${result.framesDecodedPerSecond.toFixed(3)} fps`,
-            `isFrozen: ${result.isFrozen}`
+            `timeDelta              : ${result.timeDelta.toFixed(3)} s`,
+            `measurementWindow      : ${result.measurementWindow.toFixed(3)} s`,
+            `totalFrameDecoded      : ${result.totalFrameDecoded} frames`,
+
+            `bitrate (Kbps)                : ${stat(result.bitrate.avg, result.bitrate.min, result.bitrate.max)}`,
+            `packetLoss (%)                : ${stat(result.packetLoss.avg, result.packetLoss.min, result.packetLoss.max)}`,
+            `framesDecodedPerSecond (fps)  : ${stat(result.framesDecodedPerSecond.avg, result.framesDecodedPerSecond.min, result.framesDecodedPerSecond.max)}`,
+            `jitter (ms)                   : ${stat(result.jitter.avg, result.jitter.min, result.jitter.max)}`,
+
+            `isFrozen               : ${result.isFrozen}`
         ];
 
         return direct.concat([""], derived).join("\n");
@@ -253,7 +388,18 @@ export default class LeanbotFarmRunStreamView{
             try {
                 const stats = await readerInstance.getStats();
                 const result = this.#measureQualityStats(stats);
-                const formatted = this.#formatQualityStats(result);
+
+                if (!result) return;
+
+                this.#qualitySamples.push(result);
+
+                if (this.#qualitySamples.length > 9) { // only keep most recent 9 last getStats(interval ~8s ~ 100 sample)
+                    this.#qualitySamples.shift();        // push out oldest sample
+                }
+
+                const average = this.#getQualityAverage();
+                const formatted = this.#formatQualityStats(average);
+
                 this.#updateQualityContent(formatted);
             } catch (error) {
                 console.error("[STREAM] getStats() error:", error);
@@ -302,9 +448,14 @@ export default class LeanbotFarmRunStreamView{
     ========================================================= */
 
     disconnectStreamAndTakeSnapshot() {
-        this.#captureFinalSnapshot();
-        this.#disconnectStream();
-        this.#connected = false;
+        try{
+            this.#captureFinalSnapshot();
+            this.#disconnectStream();
+            this.#connected = false;
+        }
+        catch(error){
+            console.error("disconnect stream and take snapshot error:", error);
+        }
     }
 
     connectStream(streamURL) {
@@ -326,6 +477,7 @@ export default class LeanbotFarmRunStreamView{
 
                 onError: (error) => {
                     console.error("[STREAM] WebRTC error:", error);
+                    this.onStreamConnectError(error);
                     if (this.#runSnapshotShown) return;
 
                     this.#resetState();
@@ -364,20 +516,17 @@ export default class LeanbotFarmRunStreamView{
     }
 
     #disconnectStream() {
+
         this.#stopQualityMonitoring();
 
         if (this.#reader !== null) {
-            try {
-                this.#reader.close();
-            } catch (error) {
-                console.warn("[STREAM] Error closing MediaMTX reader:", error);
-            }
+            this.#reader.close();
             this.#reader = null;
         }
 
         if (this.#remoteVideo && this.#remoteVideo.srcObject) {
             this.#remoteVideo.srcObject.getTracks().forEach(track => {
-                try { track.stop(); } catch (e) {}
+                track.stop();
             });
             this.#remoteVideo.srcObject = null;
         }
@@ -401,56 +550,57 @@ export default class LeanbotFarmRunStreamView{
     }
 
     async recordStart(fileName = null) {
-        if (!this.#connected || !this.#remoteVideo.srcObject) {
-            throw new Error("Stream is not connected");
-        }
+        try{
 
-        if (this.isRecording()) {
-            throw new Error("Recording is already running");
-        }
+            if (!this.#connected || !this.#remoteVideo.srcObject) {
+                throw new Error("Stream is not connected");
+            }
 
-        if (!window.showSaveFilePicker) {
-            throw new Error("File System Access API is not supported");
-        }
+            if (this.isRecording()) {
+                throw new Error("Recording is already running");
+            }
 
-        if (!MediaRecorder.isTypeSupported("video/webm")) {
-            throw new Error("WebM recording is not supported in this browser");
-        }
+            if (!globalThis.showSaveFilePicker) {
+                throw new Error("File System Access API is not supported");
+            }
 
-        const mimeType = "video/webm";
-        const extension = ".webm";
+            if (!MediaRecorder.isTypeSupported("video/webm")) {
+                throw new Error("WebM recording is not supported in this browser");
+            }
 
-        if (!fileName) {
-            const now = new Date();
-            const timestamp = [
-                now.getFullYear(),
-                String(now.getMonth() + 1).padStart(2, "0"),
-                String(now.getDate()).padStart(2, "0")
-            ].join("-") + "_" + [
-                String(now.getHours()).padStart(2, "0"),
-                String(now.getMinutes()).padStart(2, "0"),
-                String(now.getSeconds()).padStart(2, "0")
-            ].join("-");
-            fileName = `leanbot-recording-${timestamp}${extension}`;
-        } else if (!fileName.includes(".")) {
-            fileName += extension;
-        }
+            const mimeType = "video/webm";
+            const extension = ".webm";
 
-        const handle = await window.showSaveFilePicker({
-            suggestedName: fileName,
-            types: [
-                {
-                    description: "WebM video",
-                    accept: {
-                        [mimeType]: [extension]
+            if (!fileName) {
+                const now = new Date();
+                const timestamp = [
+                    now.getFullYear(),
+                    String(now.getMonth() + 1).padStart(2, "0"),
+                    String(now.getDate()).padStart(2, "0")
+                ].join("-") + "_" + [
+                    String(now.getHours()).padStart(2, "0"),
+                    String(now.getMinutes()).padStart(2, "0"),
+                    String(now.getSeconds()).padStart(2, "0")
+                ].join("-");
+                fileName = `leanbot-recording-${timestamp}${extension}`;
+            } else if (!fileName.includes(".")) {
+                fileName += extension;
+            }
+
+            const handle = await globalThis.showSaveFilePicker({
+                suggestedName: fileName,
+                types: [
+                    {
+                        description: "WebM video",
+                        accept: {
+                            [mimeType]: [extension]
+                        }
                     }
-                }
-            ]
-        });
+                ]
+            });
 
-        const writable = await handle.createWritable();
+            const writable = await handle.createWritable();
 
-        try {
             const stream = this.#remoteVideo.srcObject;
             const videoStream = new MediaStream(stream.getVideoTracks());
 
@@ -489,9 +639,17 @@ export default class LeanbotFarmRunStreamView{
 
             recorder.start(1000);
             console.log(`[RECORD] Recording started (${mimeType})`);
+            return {success: true, exception: null};
         } catch (error) {
+            const errorMessage = error.message || String(error) || "Unknown error";
+            if(errorMessage.includes("The user aborted a request") || errorMessage.includes("The user cancelled a request")) {
+                console.warn("[RECORD] Recording start cancelled by user");
+                return {success: false, exception: "cancelled"};
+            }
             await writable.close().catch(() => {});
-            throw error;
+            // throw error;
+            console.error("[RECORD] Failed to start recording:", error);
+            return {success: false, exception: errorMessage};
         }
     }
 
@@ -521,6 +679,8 @@ export default class LeanbotFarmRunStreamView{
             };
 
             recorder.stop();
+        }).catch((error) => {
+            console.error("Error stopping recorder:", error);
         });
     }
 }

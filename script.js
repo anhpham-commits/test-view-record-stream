@@ -88,25 +88,15 @@ statsButton.addEventListener("click", () => {
    ========================================================= */
 
 btnRecordStart.addEventListener("click", async () => {
-    try {
-        await streamView.recordStart();
-
-        btnRecordStart.disabled = true;
-        btnRecordStop.disabled = false;
-    } catch (error) {
-        console.error("[RECORD] Start failed:", error);
-    }
+    await streamView.recordStart();
+    btnRecordStart.disabled = true;
+    btnRecordStop.disabled = false;
 });
 
 btnRecordStop.addEventListener("click", async () => {
-    try {
-        await streamView.recordStop();
-
-        btnRecordStart.disabled = false;
-        btnRecordStop.disabled = true;
-    } catch (error) {
-        console.error("[RECORD] Stop failed:", error);
-    }
+    await streamView.recordStop();
+    btnRecordStart.disabled = false;
+    btnRecordStop.disabled = true;
 });
 
 /* =========================================================

@@ -54,21 +54,29 @@
     position: fixed;
     inset: 0;
     display: none;
-    justify-content: center;
-    align-items: center;
     background: transparent;
     z-index: 99999;
+    pointer-events: none;
 }
 
 .stream-quality-popup {
-    width: min(560px, 90vw);
+    position: absolute;
+
+    width: min(720px, 90vw);
     max-height: 80vh;
+
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
     padding: 20px;
     border-radius: 10px;
     background: #fff;
     color: #111;
     box-sizing: border-box;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
+
+    pointer-events: auto;
 }
 
 .stream-quality-header {
@@ -76,6 +84,13 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 14px;
+
+    cursor: move;
+    user-select: none;
+}
+
+.stream-quality-header:active {
+    cursor: grabbing;
 }
 
 .stream-quality-header h6 {
