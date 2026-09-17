@@ -733,19 +733,6 @@ export default class LeanbotFarmRunStreamView{
         }
     }
 
-    createReplay() {
-        return this.showReplay();
-    }
-
-    showReplay() {
-        if (!this.#recordingReplayUrl) {
-            console.warn("[RECORD] No recording replay available");
-            return null;
-        }
-
-        return this.#recordingReplayUrl;
-    }
-
     getReplayLink() {
         return this.#recordingReplayUrl;
     }
