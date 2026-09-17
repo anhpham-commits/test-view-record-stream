@@ -789,29 +789,15 @@ export default class LeanbotFarmRunStreamView{
         }
 
         const video = this.#previewVideo;
+        const file = this.#recordingPreviewFile;
 
-        console.log(
-            "[PREVIEW] Showing:",
-            this.#recordingPreviewFile.name
-        );
+        console.log("[PREVIEW] Showing:", file.name);
+        console.log("[PREVIEW] Size:", file.size);
+        console.log("[PREVIEW] Type:", file.type);
 
-        console.log(
-            "[PREVIEW] Size:",
-            this.#recordingPreviewFile.size
-        );
-
-        console.log(
-            "[PREVIEW] Type:",
-            this.#recordingPreviewFile.type
-        );
-
-        // Gán source
+        // Dùng lại URL đã tạo từ File
         video.src = this.#recordingPreviewUrl;
 
-        // Hiển thị preview trước khi load
-        this.#preview.style.display = "flex";
-
-        // Debug metadata
         video.onloadedmetadata = () => {
             console.log(
                 "[PREVIEW] metadata:",
@@ -823,36 +809,19 @@ export default class LeanbotFarmRunStreamView{
             );
         };
 
-        // Browser đã có đủ dữ liệu để bắt đầu decode
         video.oncanplay = () => {
             console.log("[PREVIEW] canplay");
 
-            video.play()
-                .then(() => {
-                    console.log("[PREVIEW] playing");
-                })
-                .catch(error => {
-                    console.warn("[PREVIEW] play():", error);
-                });
-        };
-
-        // Quan trọng: kiểm tra frame thực sự được render
-        video.onplaying = () => {
-            console.log(
-                "[PREVIEW] playing event:",
-                "currentTime =", video.currentTime,
-                "readyState =", video.readyState,
-                "videoWidth =", video.videoWidth,
-                "videoHeight =", video.videoHeight
-            );
+            video.play().catch(error => {
+                console.warn("[PREVIEW] play():", error);
+            });
         };
 
         video.onerror = () => {
-            console.error(
-                "[PREVIEW] Video error:",
-                video.error
-            );
+            console.error("[PREVIEW] Video error:", video.error);
         };
+
+        this.#preview.style.display = "flex";
 
         video.load();
 
