@@ -92,7 +92,11 @@ statsButton.addEventListener("click", () => {
 btnRecordStart.addEventListener("click", async () => {
     btnRecordStart.disabled = true;
     btnPreview.disabled = true;
-    await streamView.recordStart();
+    const result = await streamView.recordStart();
+    if(!result.success){
+        btnRecordStart.disabled = false;
+        return;
+    }
     btnRecordStop.disabled = false;
 });
 
