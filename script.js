@@ -9,9 +9,11 @@ const btnConnect = document.getElementById("btnConnect");
 const statsButton = document.getElementById("statsButton");
 const btnRecordStart = document.getElementById("btnRecordStart");
 const btnRecordStop = document.getElementById("btnRecordStop");
+const btnPreview = document.getElementById("btnPreview");
 
 btnRecordStart.disabled = true;
 btnRecordStop.disabled = true;
+btnPreview.disabled = true;
 
 const streamView = new LeanbotFarmRunStreamView("video", {
     controls: true,
@@ -88,13 +90,20 @@ statsButton.addEventListener("click", () => {
    ========================================================= */
 
 btnRecordStart.addEventListener("click", async () => {
+    btnRecordStop.disabled = true;
     await streamView.recordStart();
     btnRecordStart.disabled = true;
-    btnRecordStop.disabled = false;
 });
 
 btnRecordStop.addEventListener("click", async () => {
     await streamView.recordStop();
+    btnRecordStart.disabled = false;
+    btnRecordStop.disabled = true;
+    btnPreview.disabled  = false;
+});
+
+btnPreview.addEventListener("click", async () => {
+    streamView.showPreview();
     btnRecordStart.disabled = false;
     btnRecordStop.disabled = true;
 });
