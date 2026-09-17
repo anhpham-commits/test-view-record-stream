@@ -22,11 +22,7 @@ export default class LeanbotFarmRunStreamView{
     #recorder = null;
     #recordingWritable = null;
     #recordingFileHandle = null;
-    #recordingPreviewUrl = null;
-
-    #preview = null;
-    #previewVideo = null;
-    #previewCloseButton = null;
+    #recordingReplayUrl = null;
 
     onStreamConnect = () => {}
     onStreamDisconect = () => {}
@@ -158,53 +154,13 @@ export default class LeanbotFarmRunStreamView{
             }
         });
 
-        this.#preview = document.createElement("div");
-        this.#preview.className = "recording-preview";
-        this.#preview.id = "recordingPreview";
-
-        this.#preview.innerHTML = `
-            <div class="recording-preview-content">
-                <video
-                    class="recording-preview-video"
-                    controls
-                    playsinline
-                ></video>
-
-                <button
-                    class="recording-preview-close"
-                    type="button"
-                    aria-label="Close preview"
-                >
-                    ×
-                </button>
-            </div>
-        `;
-
-        this.#previewVideo =
-            this.#preview.querySelector(".recording-preview-video");
-
-        this.#previewCloseButton =
-            this.#preview.querySelector(".recording-preview-close");
-
-        this.#previewCloseButton.addEventListener("click", () => {
-            this.hidePreview();
-        });
-
-        this.#preview.addEventListener("click", (event) => {
-            if (event.target === this.#preview) {
-                this.hidePreview();
-            }
-        });
-
         target.appendChild(this.#remoteVideo);
         target.appendChild(this.#snapshotCanvas);
         target.appendChild(this.#placeholder);
         target.appendChild(this.#qualityPopup);
-        target.appendChild(this.#preview);
 
         this.hideQualityPopup();
         this.#resetState();
-        this.hidePreview();
 
         globalThis.addEventListener("beforeunload", () => {
             this.#disconnectStream();
@@ -405,14 +361,14 @@ export default class LeanbotFarmRunStreamView{
             `avg ${fmt(avg)} | min ${fmt(min)} | max ${fmt(max)}`;
 
         const derived = [
-            `timeDelta              : ${result.timeDelta.toFixed(3)} s`,
+            `timeDelta               : ${result.timeDelta.toFixed(3)} s`,
             `measurementWindow      : ${result.measurementWindow.toFixed(3)} s`,
             `totalFrameDecoded      : ${result.totalFrameDecoded} frames`,
 
-            `bitrate (Kbps)                : ${stat(result.bitrate.avg, result.bitrate.min, result.bitrate.max)}`,
-            `packetLoss (%)                : ${stat(result.packetLoss.avg, result.packetLoss.min, result.packetLoss.max)}`,
+            `bitrate (Kbps)                 : ${stat(result.bitrate.avg, result.bitrate.min, result.bitrate.max)}`,
+            `packetLoss (%)                 : ${stat(result.packetLoss.avg, result.packetLoss.min, result.packetLoss.max)}`,
             `framesDecodedPerSecond (fps)  : ${stat(result.framesDecodedPerSecond.avg, result.framesDecodedPerSecond.min, result.framesDecodedPerSecond.max)}`,
-            `jitter (ms)                   : ${stat(result.jitter.avg, result.jitter.min, result.jitter.max)}`,
+            `jitter (ms)                    : ${stat(result.jitter.avg, result.jitter.min, result.jitter.max)}`,
 
             `isFrozen               : ${result.isFrozen}`
         ];
@@ -597,8 +553,8 @@ export default class LeanbotFarmRunStreamView{
 
     async recordStart(fileName = null) {
 
-        this.#clearPreview();
-        
+        this.#clearReplay();
+
         let writable = null;
 
         try{
@@ -679,7 +635,7 @@ export default class LeanbotFarmRunStreamView{
                     await writable.close();
                     console.log("[RECORD] Recording file saved");
 
-                    await this.#savePreview();
+                    await this.#saveReplay();
                 } catch (error) {
                     console.error("[RECORD] Failed to close recording file:", error);
                 }
@@ -744,90 +700,64 @@ export default class LeanbotFarmRunStreamView{
 
 
     /* =========================================================
-    Preview
+    Replay
     ========================================================= */
 
-    async #savePreview() {
+    async #saveReplay() {
         if (!this.#recordingFileHandle) {
-            console.error("[PREVIEW] Recording file handle empty!");
+            console.error("[REPLAY] Recording file handle empty!");
             return;
         }
 
         try {
             const file = await this.#recordingFileHandle.getFile();
 
-            console.log("[PREVIEW] File:", file);
-            console.log("[PREVIEW] Name:", file.name);
-            console.log("[PREVIEW] Size:", file.size);
-            console.log("[PREVIEW] Type:", file.type);
+            console.log("[REPLAY] File:", file);
+            console.log("[REPLAY] Name:", file.name);
+            console.log("[REPLAY] Size:", file.size);
+            console.log("[REPLAY] Type:", file.type);
 
             if (file.size === 0) {
-                console.error("[PREVIEW] Recording file is empty!");
+                console.error("[REPLAY] Recording file is empty!");
                 return;
             }
 
-            this.#recordingPreviewUrl = URL.createObjectURL(file);
+            this.#recordingReplayUrl = URL.createObjectURL(file);
 
-            const link = document.createElement("a");
-            link.href = this.#recordingPreviewUrl;
-            link.textContent = "Replay";
-            link.target = "_blank";
-
-            document.body.appendChild(link);
-
-            console.log(
-                "[PREVIEW] URL:",
-                link
-            );
+            console.log("[REPLAY] URL created:", this.#recordingReplayUrl);
         } catch (error) {
             console.error(
-                "[PREVIEW] Failed to get recording file:",
+                "[REPLAY] Failed to get recording file:",
                 error
             );
         }
     }
 
-    showPreview() {
-        if (!this.#preview || !this.#recordingPreviewUrl) {
-            console.warn("[RECORD] No recording preview available");
-            return false;
-        }
-
-        this.#previewVideo.src = this.#recordingPreviewUrl;
-        this.#previewVideo.load();
-
-        this.#preview.style.display = "flex";
-
-        this.#previewVideo.play().catch(error => {
-            // Không phải lỗi nghiêm trọng: browser có thể chặn autoplay
-            console.warn("[RECORD] Preview autoplay:", error);
-        });
-
-        return true;
+    createReplay() {
+        return this.showReplay();
     }
 
-    hidePreview() {
-        if (!this.#preview) return;
-
-        this.#previewVideo.pause();
-        this.#preview.style.display = "none";
-    }
-
-    #clearPreview() {
-        this.hidePreview();
-
-        if (this.#recordingPreviewUrl) {
-            URL.revokeObjectURL(this.#recordingPreviewUrl);
-            this.#recordingPreviewUrl = null;
+    showReplay() {
+        if (!this.#recordingReplayUrl) {
+            console.warn("[RECORD] No recording replay available");
+            return null;
         }
 
-        if (this.#previewVideo) {
-            this.#previewVideo.removeAttribute("src");
-            this.#previewVideo.load();
+        return this.#recordingReplayUrl;
+    }
+
+    getReplayLink() {
+        return this.#recordingReplayUrl;
+    }
+
+    #clearReplay() {
+        if (this.#recordingReplayUrl) {
+            URL.revokeObjectURL(this.#recordingReplayUrl);
+            this.#recordingReplayUrl = null;
         }
 
         this.#recordingFileHandle = null;
 
-        console.log("[RECORD] Preview cleared");
+        console.log("[RECORD] Replay cleared");
     }
 }
