@@ -768,9 +768,16 @@ export default class LeanbotFarmRunStreamView{
 
             this.#recordingPreviewUrl = URL.createObjectURL(file);
 
+            const link = document.createElement("a");
+            link.href = this.#recordingPreviewUrl;
+            link.textContent = "Replay";
+            link.target = "_blank";
+
+            document.body.appendChild(link);
+
             console.log(
                 "[PREVIEW] URL:",
-                this.#recordingPreviewUrl
+                link
             );
         } catch (error) {
             console.error(
