@@ -651,7 +651,7 @@ export default class LeanbotFarmRunStreamView{
             });
             this.#recordingFileHandle = handle;
 
-            const writable = await handle.createWritable();
+            writable = await handle.createWritable();
 
             const stream = this.#remoteVideo.srcObject;
             const videoStream = new MediaStream(stream.getVideoTracks());
@@ -747,20 +747,37 @@ export default class LeanbotFarmRunStreamView{
     Preview
     ========================================================= */
 
-    async #savePreview(){
-
-        if(!this.#recordingFileHandle){
-            console.error("Recording file handle empty!!!");
+    async #savePreview() {
+        if (!this.#recordingFileHandle) {
+            console.error("[PREVIEW] Recording file handle empty!");
             return;
         }
 
-        // Read back the file that was just written
-        const file = await this.#recordingFileHandle.getFile();
+        try {
+            const file = await this.#recordingFileHandle.getFile();
 
-        // Create local browser preview URL
-        this.#recordingPreviewUrl = URL.createObjectURL(file);
+            console.log("[PREVIEW] File:", file);
+            console.log("[PREVIEW] Name:", file.name);
+            console.log("[PREVIEW] Size:", file.size);
+            console.log("[PREVIEW] Type:", file.type);
 
-        // console.log("[RECORD] Preview URL:", this.#recordingPreviewUrl);
+            if (file.size === 0) {
+                console.error("[PREVIEW] Recording file is empty!");
+                return;
+            }
+
+            this.#recordingPreviewUrl = URL.createObjectURL(file);
+
+            console.log(
+                "[PREVIEW] URL:",
+                this.#recordingPreviewUrl
+            );
+        } catch (error) {
+            console.error(
+                "[PREVIEW] Failed to get recording file:",
+                error
+            );
+        }
     }
 
     showPreview() {

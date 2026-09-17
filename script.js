@@ -91,16 +91,16 @@ statsButton.addEventListener("click", () => {
 
 btnRecordStart.addEventListener("click", async () => {
     btnRecordStart.disabled = true;
-    btnRecordStop.disabled = false;
     btnPreview.disabled = true;
     await streamView.recordStart();
+    btnRecordStop.disabled = false;
 });
 
 btnRecordStop.addEventListener("click", async () => {
+    await streamView.recordStop();
     btnRecordStart.disabled = false;
     btnRecordStop.disabled = true;
     btnPreview.disabled  = false;
-    await streamView.recordStop();
 });
 
 btnPreview.addEventListener("click", async () => {
