@@ -23,7 +23,6 @@ export default class LeanbotFarmRunStreamView{
     #recordingWritable = null;
     #recordingFileHandle = null;
     #recordingPreviewUrl = null;
-    #recordingPreviewFile = null;
 
     #preview = null;
     #previewVideo = null;
@@ -751,7 +750,7 @@ export default class LeanbotFarmRunStreamView{
     async #savePreview() {
         if (!this.#recordingFileHandle) {
             console.error("[PREVIEW] Recording file handle empty!");
-            return false;
+            return;
         }
 
         try {
@@ -764,66 +763,38 @@ export default class LeanbotFarmRunStreamView{
 
             if (file.size === 0) {
                 console.error("[PREVIEW] Recording file is empty!");
-                return false;
+                return;
             }
 
-            // Giữ chính File lấy từ disk để preview
-            this.#recordingPreviewFile = file;
-
-            // Tạo URL từ File trên disk
             this.#recordingPreviewUrl = URL.createObjectURL(file);
 
-            console.log("[PREVIEW] URL:", this.#recordingPreviewUrl);
-
-            return true;
+            console.log(
+                "[PREVIEW] URL:",
+                this.#recordingPreviewUrl
+            );
         } catch (error) {
-            console.error("[PREVIEW] Failed to get recording file:", error);
-            return false;
+            console.error(
+                "[PREVIEW] Failed to get recording file:",
+                error
+            );
         }
     }
 
     showPreview() {
-        if (!this.#preview || !this.#recordingPreviewFile) {
+        if (!this.#preview || !this.#recordingPreviewUrl) {
             console.warn("[RECORD] No recording preview available");
             return false;
         }
 
-        const video = this.#previewVideo;
-        const file = this.#recordingPreviewFile;
-
-        console.log("[PREVIEW] Showing:", file.name);
-        console.log("[PREVIEW] Size:", file.size);
-        console.log("[PREVIEW] Type:", file.type);
-
-        // Dùng lại URL đã tạo từ File
-        video.src = this.#recordingPreviewUrl;
-
-        video.onloadedmetadata = () => {
-            console.log(
-                "[PREVIEW] metadata:",
-                video.videoWidth,
-                "x",
-                video.videoHeight,
-                "duration:",
-                video.duration
-            );
-        };
-
-        video.oncanplay = () => {
-            console.log("[PREVIEW] canplay");
-
-            video.play().catch(error => {
-                console.warn("[PREVIEW] play():", error);
-            });
-        };
-
-        video.onerror = () => {
-            console.error("[PREVIEW] Video error:", video.error);
-        };
+        this.#previewVideo.src = this.#recordingPreviewUrl;
+        this.#previewVideo.load();
 
         this.#preview.style.display = "flex";
 
-        video.load();
+        this.#previewVideo.play().catch(error => {
+            // Không phải lỗi nghiêm trọng: browser có thể chặn autoplay
+            console.warn("[RECORD] Preview autoplay:", error);
+        });
 
         return true;
     }
@@ -842,8 +813,6 @@ export default class LeanbotFarmRunStreamView{
             URL.revokeObjectURL(this.#recordingPreviewUrl);
             this.#recordingPreviewUrl = null;
         }
-
-        this.#recordingPreviewFile = null;
 
         if (this.#previewVideo) {
             this.#previewVideo.removeAttribute("src");
