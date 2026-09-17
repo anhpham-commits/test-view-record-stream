@@ -21,6 +21,8 @@ export default class LeanbotFarmRunStreamView{
     // RECORDING
     #recorder = null;
     #recordingWritable = null;
+    #recordingFileHandle = null;
+    #recordingPreviewUrl = null;
 
     onStreamConnect = () => {}
     onStreamDisconect = () => {}
@@ -550,6 +552,9 @@ export default class LeanbotFarmRunStreamView{
     }
 
     async recordStart(fileName = null) {
+        
+        let writable = null;
+
         try{
 
             if (!this.#connected || !this.#remoteVideo.srcObject) {
@@ -598,6 +603,7 @@ export default class LeanbotFarmRunStreamView{
                     }
                 ]
             });
+            this.#recordingFileHandle = handle;
 
             const writable = await handle.createWritable();
 
@@ -625,7 +631,16 @@ export default class LeanbotFarmRunStreamView{
             recorder.onstop = async () => {
                 try {
                     await writable.close();
+
                     console.log("[RECORD] Recording file saved");
+
+                    // Read back the file that was just written
+                    const file = await handle.getFile();
+
+                    // Create local browser preview URL
+                    this.#recordingPreviewUrl = URL.createObjectURL(file);
+
+                    console.log("[RECORD] Preview URL:", this.#recordingPreviewUrl);
                 } catch (error) {
                     console.error("[RECORD] Failed to close recording file:", error);
                 }
@@ -646,7 +661,11 @@ export default class LeanbotFarmRunStreamView{
                 console.warn("[RECORD] Recording start cancelled by user");
                 return {success: false, exception: "cancelled"};
             }
-            await writable.close().catch(() => {});
+
+            if (writable) {
+                await writable.close().catch(() => {});
+            }
+
             // throw error;
             console.error("[RECORD] Failed to start recording:", error);
             return {success: false, exception: errorMessage};
