@@ -90,22 +90,20 @@ statsButton.addEventListener("click", () => {
    ========================================================= */
 
 btnRecordStart.addEventListener("click", async () => {
-    btnRecordStop.disabled = true;
-    await streamView.recordStart();
+    btnPreview.disabled = true;
     btnRecordStart.disabled = true;
+    await streamView.recordStart();
 });
 
 btnRecordStop.addEventListener("click", async () => {
-    await streamView.recordStop();
     btnRecordStart.disabled = false;
     btnRecordStop.disabled = true;
     btnPreview.disabled  = false;
+    await streamView.recordStop();
 });
 
 btnPreview.addEventListener("click", async () => {
     streamView.showPreview();
-    btnRecordStart.disabled = false;
-    btnRecordStop.disabled = true;
 });
 
 /* =========================================================

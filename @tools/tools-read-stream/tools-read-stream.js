@@ -597,7 +597,7 @@ export default class LeanbotFarmRunStreamView{
 
     async recordStart(fileName = null) {
 
-        this.clearPreview();
+        this.#clearPreview();
         
         let writable = null;
 
@@ -679,7 +679,7 @@ export default class LeanbotFarmRunStreamView{
                     await writable.close();
                     console.log("[RECORD] Recording file saved");
 
-                    await this.savePreview();
+                    await this.#savePreview();
                 } catch (error) {
                     console.error("[RECORD] Failed to close recording file:", error);
                 }
@@ -747,7 +747,7 @@ export default class LeanbotFarmRunStreamView{
     Preview
     ========================================================= */
 
-    async savePreview(){
+    async #savePreview(){
 
         if(!this.#recordingFileHandle){
             console.error("Recording file handle empty!!!");
@@ -789,7 +789,7 @@ export default class LeanbotFarmRunStreamView{
         this.#preview.style.display = "none";
     }
 
-    clearPreview() {
+    #clearPreview() {
         this.hidePreview();
 
         if (this.#recordingPreviewUrl) {
