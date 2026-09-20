@@ -22,7 +22,7 @@ export default class LeanbotFarmRunStreamView{
     #recorder = null;
     #recordingWritable = null;
     #recordingFileHandle = null;
-    #recordingReplayUrl = null;
+    #replayHistory = [];
 
     onStreamConnect = () => {}
     onStreamDisconect = () => {}
@@ -164,6 +164,14 @@ export default class LeanbotFarmRunStreamView{
 
         globalThis.addEventListener("beforeunload", () => {
             this.#disconnectStream();
+
+            this.#replayHistory.forEach(replay => {
+                if (replay.objecturl) {
+                    URL.revokeObjectURL(replay.objecturl);
+                }
+            });
+
+            this.#replayHistory = [];
         });
     }
 
@@ -553,8 +561,6 @@ export default class LeanbotFarmRunStreamView{
 
     async recordStart(fileName = null) {
 
-        this.#clearReplay();
-
         let writable = null;
 
         try{
@@ -722,9 +728,25 @@ export default class LeanbotFarmRunStreamView{
                 return;
             }
 
-            this.#recordingReplayUrl = URL.createObjectURL(file);
+            const objecturl = URL.createObjectURL(file);
 
-            console.log("[REPLAY] URL created:", this.#recordingReplayUrl);
+            const replay = {
+                objecturl: objecturl,
+                filename: file.name,
+                duration: null,
+                size: file.size
+            };
+
+            this.#replayHistory.push(replay);
+
+            const a = document.createElement("a");
+            a.href = replay.objecturl;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = replay.filename;
+
+            console.log("[REPLAY] Clickable replay link:", a);
+            console.log("[REPLAY] Replay history:", this.#replayHistory);
         } catch (error) {
             console.error(
                 "[REPLAY] Failed to get recording file:",
@@ -734,17 +756,14 @@ export default class LeanbotFarmRunStreamView{
     }
 
     getReplayLink() {
-        return this.#recordingReplayUrl;
-    }
-
-    #clearReplay() {
-        if (this.#recordingReplayUrl) {
-            URL.revokeObjectURL(this.#recordingReplayUrl);
-            this.#recordingReplayUrl = null;
+        if (this.#replayHistory.length === 0) {
+            return null;
         }
 
-        this.#recordingFileHandle = null;
+        return this.#replayHistory[this.#replayHistory.length - 1].objecturl;
+    }
 
-        console.log("[RECORD] Replay cleared");
+    getReplayHistory() {
+        return this.#replayHistory;
     }
 }
