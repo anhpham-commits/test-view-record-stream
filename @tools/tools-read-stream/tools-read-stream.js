@@ -41,6 +41,37 @@ export default class LeanbotFarmRunStreamView{
 
         target.innerHTML = "";
 
+        // runStreamView
+        this.uiRunStreamViewInit(videoOptions);
+
+        // streamQualityModal
+        this.uiStreamQualityModalInit();
+
+        // canvas
+        this.uiCanvasInit();
+
+        target.appendChild(this.#remoteVideo);
+        target.appendChild(this.#snapshotCanvas);
+        target.appendChild(this.#placeholder);
+        target.appendChild(this.#qualityPopup);
+
+        this.hideQualityPopup();
+        this.#resetState();
+
+        globalThis.addEventListener("beforeunload", () => {
+            this.#disconnectStream();
+
+            this.#replayHistory.forEach(replay => {
+                if (replay.objecturl) {
+                    URL.revokeObjectURL(replay.objecturl);
+                }
+            });
+
+            this.#replayHistory = [];
+        });
+    }
+
+    uiRunStreamViewInit(videoOptions = {}) {
         this.#remoteVideo = document.createElement("video");
         this.#remoteVideo.id = "remoteVideo";
         this.#remoteVideo.controls = videoOptions.controls !== undefined ? videoOptions.controls : true;
@@ -56,25 +87,24 @@ export default class LeanbotFarmRunStreamView{
             });
         }
 
-        this.#snapshotCanvas = document.createElement("canvas");
-        this.#snapshotCanvas.id = "snapshotCanvas";
-
         this.#placeholder = document.createElement("div");
         this.#placeholder.className = "placeholder";
         this.#placeholder.id = "placeholder";
         this.#placeholder.textContent = "No Stream";
+    }
 
+    uiStreamQualityModalInit() {
         this.#qualityPopup = document.createElement("div");
         this.#qualityPopup.id = "streamQualityPopup";
         this.#qualityPopup.innerHTML = `
-            <div class="stream-quality-popup">
-                <div class="stream-quality-header">
-                    <h6>Stream Quality</h6>
-                    <button class="stream-quality-close" type="button" aria-label="Close stream quality">×</button>
+                <div class="stream-quality-popup">
+                    <div class="stream-quality-header">
+                        <h6>Stream Quality</h6>
+                        <button class="stream-quality-close" type="button" aria-label="Close stream quality">×</button>
+                    </div>
+                    <pre class="stream-quality-content"></pre>
                 </div>
-                <pre class="stream-quality-content"></pre>
-            </div>
-        `;
+            `;
 
         this.#qualityCloseButton = this.#qualityPopup.querySelector(".stream-quality-close");
         this.#qualityContent = this.#qualityPopup.querySelector(".stream-quality-content");
@@ -154,26 +184,11 @@ export default class LeanbotFarmRunStreamView{
                 this.hideQualityPopup();
             }
         });
+    }
 
-        target.appendChild(this.#remoteVideo);
-        target.appendChild(this.#snapshotCanvas);
-        target.appendChild(this.#placeholder);
-        target.appendChild(this.#qualityPopup);
-
-        this.hideQualityPopup();
-        this.#resetState();
-
-        globalThis.addEventListener("beforeunload", () => {
-            this.#disconnectStream();
-
-            this.#replayHistory.forEach(replay => {
-                if (replay.objecturl) {
-                    URL.revokeObjectURL(replay.objecturl);
-                }
-            });
-
-            this.#replayHistory = [];
-        });
+    uiCanvasInit() {
+        this.#snapshotCanvas = document.createElement("canvas");
+        this.#snapshotCanvas.id = "snapshotCanvas";
     }
 
     isStreamConnected(){
