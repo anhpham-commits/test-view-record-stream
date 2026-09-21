@@ -5,6 +5,7 @@ export default class LeanbotFarmRunStreamView{
     #remoteVideo;
     #snapshotCanvas;
     #placeholder;
+    #replayHistoryURLList;
     #qualityPopup;
     #qualityContent;
     #qualityCloseButton;
@@ -50,6 +51,7 @@ export default class LeanbotFarmRunStreamView{
 
         target.appendChild(this.#remoteVideo);
         target.appendChild(this.#snapshotCanvas);
+        target.appendChild(this.#replayHistoryURLList);
         target.appendChild(this.#placeholder);
         target.appendChild(this.#qualityPopup);
 
@@ -95,6 +97,12 @@ export default class LeanbotFarmRunStreamView{
         // Canvas
         this.#snapshotCanvas = document.createElement("canvas");
         this.#snapshotCanvas.id = "snapshotCanvas";
+
+        // Replay History URL List
+        this.#replayHistoryURLList = document.createElement("div");
+        this.#replayHistoryURLList.className = "replay-history-list";
+        this.#replayHistoryURLList.id = "replayHistoryURLList";
+        this.#replayHistoryURLList.style.display = "none";
     }
 
     uiStreamQualityModalInit() {
@@ -188,6 +196,18 @@ export default class LeanbotFarmRunStreamView{
                 this.hideQualityPopup();
             }
         });
+    }
+
+    showRelayList() {
+        if (this.#replayHistoryURLList) {
+            this.#replayHistoryURLList.style.display = "block";
+        }
+    }
+
+    hideRelaylist() {
+        if (this.#replayHistoryURLList) {
+            this.#replayHistoryURLList.style.display = "none";
+        }
     }
 
     isStreamConnected(){
@@ -678,11 +698,28 @@ export default class LeanbotFarmRunStreamView{
             this.#recordDuration = 0;
             this.#recordStartTimeStamp = null;
 
+            const row = document.createElement("div");
+            row.className = "replay-history-row";
+
             const a = document.createElement("a");
             a.href = replay.objecturl;
             a.target = "_blank";
             a.rel = "noopener noreferrer";
             a.textContent = replay.startTimeStamp;
+
+            const durationSpan = document.createElement("span");
+            durationSpan.className = "replay-duration";
+            durationSpan.textContent = `${replay.duration.toFixed(3)} s`;
+
+            const sizeSpan = document.createElement("span");
+            sizeSpan.className = "replay-size";
+            sizeSpan.textContent = `${(replay.size / 1024).toFixed(3)} KB`;
+
+            row.appendChild(a);
+            row.appendChild(durationSpan);
+            row.appendChild(sizeSpan);
+
+            this.#replayHistoryURLList.appendChild(row);
 
             console.log("[REPLAY] Clickable replay link:", a);
             console.log("[REPLAY] Replay history:", this.#replayHistory);

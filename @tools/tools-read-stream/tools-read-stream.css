@@ -50,6 +50,59 @@
     user-select: none;
 }
 
+/* REPLAY HISTORY LIST */
+.replay-history-list {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10000;
+    background: rgba(30, 30, 30, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+    max-height: calc(100% - 20px);
+    overflow-y: auto;
+    color: #ffffff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+}
+
+.replay-history-row {
+    display: grid;
+    grid-template-columns: minmax(140px, auto) 80px 90px;
+    gap: 12px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    align-items: center;
+    transition: background 0.2s ease;
+}
+
+.replay-history-row:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.replay-history-row a {
+    color: #4da6ff;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.replay-history-row a:hover {
+    text-decoration: underline;
+}
+
+.replay-history-row .replay-duration,
+.replay-history-row .replay-size {
+    text-align: right;
+    color: #cccccc;
+    white-space: nowrap;
+}
+
 #streamQualityPopup {
     position: fixed;
     inset: 0;
