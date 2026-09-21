@@ -709,43 +709,36 @@ export default class LeanbotFarmRunStreamView{
             return;
         }
 
-        try {
-            const file = await this.#recordingFileHandle.getFile();
+        const file = await this.#recordingFileHandle.getFile();
 
-            console.log("[REPLAY] File:", file);
-            console.log("[REPLAY] Name:", file.name);
-            console.log("[REPLAY] Size:", file.size);
-            console.log("[REPLAY] Type:", file.type);
+        console.log("[REPLAY] File:", file);
+        console.log("[REPLAY] Name:", file.name);
+        console.log("[REPLAY] Size:", file.size);
+        console.log("[REPLAY] Type:", file.type);
 
-            if (file.size === 0) {
-                console.error("[REPLAY] Recording file is empty!");
-                return;
-            }
-
-            const objecturl = URL.createObjectURL(file);
-
-            const replay = {
-                objecturl: objecturl,
-                startTimeStamp: this.#recordStartTimeStamp,
-                filename: file.name,
-                duration: this.#recordDuration,
-                size: file.size
-            };
-
-            this.#replayHistory.push(replay);
-            this.#recordDuration = 0;
-            this.#recordStartTimeStamp = null;
-
-            this.#addReplayHistory(replay);
-            
-            // console.log("[REPLAY] Clickable replay link:", a);
-            console.log("[REPLAY] Replay history:", this.#replayHistory);
-        } catch (error) {
-            console.error(
-                "[REPLAY] Failed to get recording file:",
-                error
-            );
+        if (file.size === 0) {
+            console.error("[REPLAY] Recording file is empty!");
+            return;
         }
+
+        const objecturl = URL.createObjectURL(file);
+
+        const replay = {
+            objecturl: objecturl,
+            startTimeStamp: this.#recordStartTimeStamp,
+            filename: file.name,
+            duration: this.#recordDuration,
+            size: file.size
+        };
+
+        this.#replayHistory.push(replay);
+        this.#recordDuration = 0;
+        this.#recordStartTimeStamp = null;
+
+        this.#addReplayHistory(replay);
+
+        // console.log("[REPLAY] Clickable replay link:", a);
+        console.log("[REPLAY] Replay history:", this.#replayHistory);
     }
 
     getReplayLink() {
