@@ -299,7 +299,7 @@ export default class LeanbotFarmRunStreamView{
         ];
 
         const derived = [
-            `totalFrameDecoded      : ${result.totalFrameDecoded} frames`,
+            `totalFrameDecoded: ${result.totalFrameDecoded} frames`,
             `bitrate: ${result.bitrate.toFixed(3)} kbps`,
             `packetLoss: ${result.packetsLostDelta} / ${result.packetsLostDelta + result.packetsReceivedDelta}`,
             `framesDecodedPerSecond: ${result.framesDecodedPerSecond.toFixed(1)}`
