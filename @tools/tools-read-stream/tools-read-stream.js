@@ -218,11 +218,34 @@ export default class LeanbotFarmRunStreamView{
     }
 
     showRelayList() {
-        this.#replayHistoryURLList.style.display = "block";
+        // this.#replayHistoryURLList.style.display = "block";
+        this.#replayHistoryURLList.style.display = "flex";
     }
 
     hideRelaylist() {
         this.#replayHistoryURLList.style.display = "none";
+    }
+
+    #addReplayHistory(replay) {
+        const row = document.createElement("div");
+        row.className = "replay-history-row";
+
+        const a = document.createElement("a");
+        a.href = replay.objecturl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.textContent = replay.startTimeStamp;
+
+        const durationSpan = document.createElement("span");
+        durationSpan.className = "replay-duration";
+        durationSpan.textContent = `${replay.duration.toFixed(3)} s`;
+
+        const sizeSpan = document.createElement("span");
+        sizeSpan.className = "replay-size";
+        sizeSpan.textContent = `${(replay.size / 1024).toFixed(3)} KB`;
+
+        row.append(a, durationSpan, sizeSpan);
+        this.#replayHistoryURLList.appendChild(row);
     }
 
     isStreamConnected(){
@@ -713,30 +736,9 @@ export default class LeanbotFarmRunStreamView{
             this.#recordDuration = 0;
             this.#recordStartTimeStamp = null;
 
-            const row = document.createElement("div");
-            row.className = "replay-history-row";
-
-            const a = document.createElement("a");
-            a.href = replay.objecturl;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            a.textContent = replay.startTimeStamp;
-
-            const durationSpan = document.createElement("span");
-            durationSpan.className = "replay-duration";
-            durationSpan.textContent = `${replay.duration.toFixed(3)} s`;
-
-            const sizeSpan = document.createElement("span");
-            sizeSpan.className = "replay-size";
-            sizeSpan.textContent = `${(replay.size / 1024).toFixed(3)} KB`;
-
-            row.appendChild(a);
-            row.appendChild(durationSpan);
-            row.appendChild(sizeSpan);
-
-            this.#replayHistoryURLList.appendChild(row);
-
-            console.log("[REPLAY] Clickable replay link:", a);
+            this.#addReplayHistory(replay);
+            
+            // console.log("[REPLAY] Clickable replay link:", a);
             console.log("[REPLAY] Replay history:", this.#replayHistory);
         } catch (error) {
             console.error(

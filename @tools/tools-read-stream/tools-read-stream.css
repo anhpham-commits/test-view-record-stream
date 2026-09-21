@@ -56,18 +56,30 @@
     top: 10px;
     right: 10px;
     z-index: 10000;
+    
+    /* Kích thước cố định 2/3 chiều cao màn hình cha (.screen) */
+    height: calc(66.66% - 20px);
+    width: min(360px, 80vw);
+
     background: rgba(30, 30, 30, 0.85);
     backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     padding: 30px 10px 10px 10px;
-    max-height: calc(100% - 20px);
+    
+    /* Tự động hiện thanh cuộn khi tràn nội dung */
     overflow-y: auto;
+    
     color: #ffffff;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 13px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     box-sizing: border-box;
+
+    /* Đảm bảo layout flex cho phần container chứa items */
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .replay-history-close {
@@ -87,6 +99,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
 }
 
 .replay-history-close:hover {
@@ -96,11 +109,12 @@
 
 .replay-history-row {
     display: grid;
-    grid-template-columns: minmax(140px, auto) 80px 90px;
-    gap: 12px;
+    grid-template-columns: minmax(130px, 1fr) 75px 80px;
+    gap: 8px;
     padding: 6px 8px;
     border-radius: 4px;
     align-items: center;
+    flex-shrink: 0; /* Giữ nguyên kích thước row khi scroll */
     transition: background 0.2s ease;
 }
 
