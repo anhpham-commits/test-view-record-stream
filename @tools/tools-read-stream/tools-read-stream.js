@@ -730,8 +730,9 @@ export default class LeanbotFarmRunStreamView{
 
         let replayDuration = await this.#getReplayDuration(file);
 
-        if (replayDuration === null) {
-            console.warn("[REPLAY] Failed to determine video duration.");
+        if (!Number.isFinite(replayDuration)) {
+            replayDuration = null;
+            console.log("[REPLAY] Failed to get valid duration.");
         }
 
         const replay = {
@@ -754,7 +755,7 @@ export default class LeanbotFarmRunStreamView{
     }
 
     async #getReplayDuration(blob) {
-        // ref: https://stackoverflow.com/questions/38062864/blob-video-duration-metadata
+        // ref: https://stackoverflow.com/questions/30072946/how-to-get-duration-of-video-when-i-am-using-filereader-to-read-the-video-file
         return new Promise((resolve, reject) => {
             const url = URL.createObjectURL(blob);
             const video = document.createElement("video");
@@ -762,76 +763,20 @@ export default class LeanbotFarmRunStreamView{
             video.preload = "metadata";
             video.src = url;
 
-            let resolved = false;
-
             const cleanup = () => {
                 URL.revokeObjectURL(url);
-
-                video.onloadedmetadata = null;
-                video.ondurationchange = null;
-                video.onseeking = null;
-                video.onerror = null;
-
                 video.removeAttribute("src");
                 video.load();
                 video.remove();
             };
 
-            const finish = (duration) => {
-                if (resolved) {
-                    return;
-                }
-
-                resolved = true;
+            video.onloadedmetadata = () => {
+                const duration = video.duration;
                 cleanup();
                 resolve(duration);
             };
 
-            video.onloadedmetadata = function () {
-                console.log("[REPLAY] Initial duration:", video.duration);
-
-                // Normal case
-                if (Number.isFinite(video.duration)) {
-                    finish(video.duration);
-                    return;
-                }
-
-                // Duration is Infinity.
-                // Force a seek to a very large time so the browser
-                // can determine the actual duration.
-                if (video.duration === Infinity) {
-                    console.log(
-                        "[REPLAY] Duration is Infinity, forcing seek..."
-                    );
-
-                    video.currentTime = 1e101;
-
-                    video.onseeking = function () {
-                        // Reset playback position
-                        video.currentTime = 0;
-                        video.onseeking = null;
-                    };
-
-                    video.ondurationchange = function () {
-                        console.log(
-                            "[REPLAY] Duration changed:",
-                            video.duration
-                        );
-
-                        if (Number.isFinite(video.duration)) {
-                            finish(video.duration);
-                        }
-                    };
-
-                    return;
-                }
-
-                // NaN or other invalid value
-                finish(null);
-            };
-
-            video.onerror = function () {
-                console.error("[REPLAY] Failed to load video metadata.");
+            video.onerror = () => {
                 cleanup();
                 reject(new Error("[REPLAY] Failed to load video metadata."));
             };
