@@ -217,7 +217,7 @@ module.exports = (env, argv) => ({
             ignore: [
               "**/dist/**",
               "**/node_modules/**",
-
+              "**/.github/**",
               // Build/config files
               "**/webpack.config.js",
               "**/package.json",
