@@ -711,78 +711,50 @@ export default class LeanbotFarmRunStreamView{
 
     async #saveReplay() {
         if (!this.#recordingFileHandle) {
-            throw new Error("[REPLAY] Recording file handle empty!");
-        }
-
-        const file = await this.#recordingFileHandle.getFile();
-
-        console.log("[REPLAY] File:", file);
-        console.log("[REPLAY] Name:", file.name);
-        console.log("[REPLAY] Size:", file.size);
-        console.log("[REPLAY] Type:", file.type);
-
-        if (file.size === 0) {
-            console.error("[REPLAY] Recording file is empty!");
+            console.error("[REPLAY] Recording file handle empty!");
             return;
         }
 
-        const objecturl = URL.createObjectURL(file);
+        try {
+            const file = await this.#recordingFileHandle.getFile();
 
-        let replayDuration = await this.#getReplayDuration(file);
+            console.log("[REPLAY] File:", file);
+            console.log("[REPLAY] Name:", file.name);
+            console.log("[REPLAY] Size:", file.size);
+            console.log("[REPLAY] Type:", file.type);
 
-        if (!Number.isFinite(replayDuration)) {
-            replayDuration = null;
-            console.log("[REPLAY] Failed to get valid duration.");
+            if (file.size === 0) {
+                console.error("[REPLAY] Recording file is empty!");
+                return;
+            }
+
+            const objecturl = URL.createObjectURL(file);
+
+            const replay = {
+                objecturl: objecturl,
+                filename: file.name,
+                duration: null,
+                size: file.size
+            };
+
+            this.#replayHistory.push(replay);
+
+            const a = document.createElement("a");
+            a.href = replay.objecturl;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = replay.filename;
+
+            console.log("[REPLAY] Clickable replay link:", a);
+            console.log("[REPLAY] Replay history:", this.#replayHistory);
+        } catch (error) {
+            console.error(
+                "[REPLAY] Failed to get recording file:",
+                error
+            );
         }
-
-        const replay = {
-            objecturl: objecturl,
-            filename: file.name,
-            duration: replayDuration,
-            size: file.size
-        };
-
-        this.#replayHistory.push(replay);
-
-        const a = document.createElement("a");
-        a.href = replay.objecturl;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.textContent = replay.filename;
-
-        console.log("[REPLAY] Clickable replay link:", a);
-        console.log("[REPLAY] Replay history:", this.#replayHistory);
     }
 
-    async #getReplayDuration(blob) {
-        // ref: https://stackoverflow.com/questions/30072946/how-to-get-duration-of-video-when-i-am-using-filereader-to-read-the-video-file
-        return new Promise((resolve, reject) => {
-            const url = URL.createObjectURL(blob);
-            const video = document.createElement("video");
-
-            video.preload = "metadata";
-            video.src = url;
-
-            const cleanup = () => {
-                URL.revokeObjectURL(url);
-                video.removeAttribute("src");
-                video.load();
-                video.remove();
-            };
-
-            video.onloadedmetadata = () => {
-                const duration = video.duration;
-                cleanup();
-                resolve(duration);
-            };
-
-            video.onerror = () => {
-                cleanup();
-                reject(new Error("[REPLAY] Failed to load video metadata."));
-            };
-        });
-    }
-    
     getReplayLink() {
         if (this.#replayHistory.length === 0) {
             return null;
