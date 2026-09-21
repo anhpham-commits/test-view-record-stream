@@ -60,7 +60,7 @@
     backdrop-filter: blur(4px);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
-    padding: 10px;
+    padding: 30px 10px 10px 10px;
     max-height: calc(100% - 20px);
     overflow-y: auto;
     color: #ffffff;
@@ -68,6 +68,30 @@
     font-size: 13px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     box-sizing: border-box;
+}
+
+.replay-history-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #aaa;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.replay-history-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
 }
 
 .replay-history-row {

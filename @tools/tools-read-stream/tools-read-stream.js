@@ -6,6 +6,7 @@ export default class LeanbotFarmRunStreamView{
     #snapshotCanvas;
     #placeholder;
     #replayHistoryURLList;
+    #replayHistoryCloseButton;
     #qualityPopup;
     #qualityContent;
     #qualityCloseButton;
@@ -103,6 +104,24 @@ export default class LeanbotFarmRunStreamView{
         this.#replayHistoryURLList.className = "replay-history-list";
         this.#replayHistoryURLList.id = "replayHistoryURLList";
         this.#replayHistoryURLList.style.display = "none";
+
+        // Replay History Close Button
+        this.#replayHistoryCloseButton = document.createElement("button");
+        this.#replayHistoryCloseButton.type = "button";
+        this.#replayHistoryCloseButton.className = "replay-history-close";
+        this.#replayHistoryCloseButton.setAttribute("aria-label", "Close replay list");
+        this.#replayHistoryCloseButton.textContent = "×";
+        this.#replayHistoryCloseButton.addEventListener("click", () => {
+            this.hideRelaylist();
+        });
+        this.#replayHistoryURLList.appendChild(this.#replayHistoryCloseButton);
+        setTimeout(() => {
+            globalThis.addEventListener("pointerdown", ({ target }) => {
+                if (!this.#replayHistoryURLList?.contains(target)) {
+                    this.hideRelaylist();
+                }
+            });
+        });
     }
 
     uiStreamQualityModalInit() {
@@ -199,15 +218,11 @@ export default class LeanbotFarmRunStreamView{
     }
 
     showRelayList() {
-        if (this.#replayHistoryURLList) {
-            this.#replayHistoryURLList.style.display = "block";
-        }
+        this.#replayHistoryURLList.style.display = "block";
     }
 
     hideRelaylist() {
-        if (this.#replayHistoryURLList) {
-            this.#replayHistoryURLList.style.display = "none";
-        }
+        this.#replayHistoryURLList.style.display = "none";
     }
 
     isStreamConnected(){

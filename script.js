@@ -108,17 +108,7 @@ btnRecordStop.addEventListener("click", async () => {
 });
 
 btnPreview.addEventListener("click", async () => {
-    const replayUrl = streamView.getReplayLink();
-    
-    if (replayUrl) {
-        const a = document.createElement("a");
-        a.href = replayUrl;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        a.click();
-    } else {
-        console.warn("[RECORD] No replay link available");
-    }
+    streamView.showRelayList();
 });
 
 /* =========================================================
