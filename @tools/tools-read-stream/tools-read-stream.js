@@ -47,9 +47,6 @@ export default class LeanbotFarmRunStreamView{
         // streamQualityModal
         this.uiStreamQualityModalInit();
 
-        // canvas
-        this.uiCanvasInit();
-
         target.appendChild(this.#remoteVideo);
         target.appendChild(this.#snapshotCanvas);
         target.appendChild(this.#placeholder);
@@ -72,6 +69,7 @@ export default class LeanbotFarmRunStreamView{
     }
 
     uiRunStreamViewInit(videoOptions = {}) {
+        // Stream video
         this.#remoteVideo = document.createElement("video");
         this.#remoteVideo.id = "remoteVideo";
         this.#remoteVideo.controls = videoOptions.controls !== undefined ? videoOptions.controls : true;
@@ -87,10 +85,15 @@ export default class LeanbotFarmRunStreamView{
             });
         }
 
+        // Place holder
         this.#placeholder = document.createElement("div");
         this.#placeholder.className = "placeholder";
         this.#placeholder.id = "placeholder";
         this.#placeholder.textContent = "No Stream";
+
+        // Canvas
+        this.#snapshotCanvas = document.createElement("canvas");
+        this.#snapshotCanvas.id = "snapshotCanvas";
     }
 
     uiStreamQualityModalInit() {
@@ -184,11 +187,6 @@ export default class LeanbotFarmRunStreamView{
                 this.hideQualityPopup();
             }
         });
-    }
-
-    uiCanvasInit() {
-        this.#snapshotCanvas = document.createElement("canvas");
-        this.#snapshotCanvas.id = "snapshotCanvas";
     }
 
     isStreamConnected(){
