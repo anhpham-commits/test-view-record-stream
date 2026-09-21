@@ -741,15 +741,15 @@ export default class LeanbotFarmRunStreamView{
         console.log("[REPLAY] Replay history:", this.#replayHistory);
     }
 
-    getReplayLink() {
-        if (this.#replayHistory.length === 0) {
-            return null;
-        }
+    // getReplayLink() {
+    //     if (this.#replayHistory.length === 0) {
+    //         return null;
+    //     }
 
-        return this.#replayHistory[this.#replayHistory.length - 1].objecturl;
-    }
+    //     return this.#replayHistory[this.#replayHistory.length - 1].objecturl;
+    // }
 
-    getReplayHistory() {
-        return this.#replayHistory;
-    }
+    // getReplayHistory() {
+    //     return this.#replayHistory;
+    // }
 }
