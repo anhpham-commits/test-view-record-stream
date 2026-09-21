@@ -22,6 +22,7 @@ export default class LeanbotFarmRunStreamView{
     #recorder = null;
     #recordingWritable = null;
     #recordingFileHandle = null;
+    #recordStartTimeStamp = null;
     #recordDuration = 0;
     #replayHistory = [];
 
@@ -519,7 +520,7 @@ export default class LeanbotFarmRunStreamView{
 
             if (!fileName) {
                 const now = new Date();
-                const timestamp = [
+                this.#recordStartTimeStamp = [
                     now.getFullYear(),
                     String(now.getMonth() + 1).padStart(2, "0"),
                     String(now.getDate()).padStart(2, "0")
@@ -528,7 +529,7 @@ export default class LeanbotFarmRunStreamView{
                     String(now.getMinutes()).padStart(2, "0"),
                     String(now.getSeconds()).padStart(2, "0")
                 ].join("-");
-                fileName = `leanbot-recording-${timestamp}${extension}`;
+                fileName = `leanbot-recording-${this.#recordStartTimeStamp}${extension}`;
             } else if (!fileName.includes(".")) {
                 fileName += extension;
             }
@@ -667,6 +668,7 @@ export default class LeanbotFarmRunStreamView{
 
             const replay = {
                 objecturl: objecturl,
+                startTimeStamp: this.#recordStartTimeStamp,
                 filename: file.name,
                 duration: this.#recordDuration,
                 size: file.size
@@ -674,12 +676,13 @@ export default class LeanbotFarmRunStreamView{
 
             this.#replayHistory.push(replay);
             this.#recordDuration = 0;
+            this.#recordStartTimeStamp = null;
 
             const a = document.createElement("a");
             a.href = replay.objecturl;
             a.target = "_blank";
             a.rel = "noopener noreferrer";
-            a.textContent = replay.filename;
+            a.textContent = replay.startTimeStamp;
 
             console.log("[REPLAY] Clickable replay link:", a);
             console.log("[REPLAY] Replay history:", this.#replayHistory);
