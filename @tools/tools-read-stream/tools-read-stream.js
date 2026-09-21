@@ -22,6 +22,7 @@ export default class LeanbotFarmRunStreamView{
     #recorder = null;
     #recordingWritable = null;
     #recordingFileHandle = null;
+    #recordDuration = 0;
     #replayHistory = [];
 
     onStreamConnect = () => {}
@@ -624,6 +625,7 @@ export default class LeanbotFarmRunStreamView{
 
             recorder.ondataavailable = async (event) => {
                 if (event.data.size > 0) {
+                    this.#recordDuration = event.timecode / 1000;
                     try {
                         await writable.write(event.data);
                     } catch (error) {
@@ -652,6 +654,7 @@ export default class LeanbotFarmRunStreamView{
 
             this.#recorder = recorder;
             this.#recordingWritable = writable;
+            this.#recordDuration = 0;
 
             recorder.start(1000);
             console.log(`[RECORD] Recording started (${mimeType})`);
@@ -733,11 +736,12 @@ export default class LeanbotFarmRunStreamView{
             const replay = {
                 objecturl: objecturl,
                 filename: file.name,
-                duration: null,
+                duration: this.#recordDuration,
                 size: file.size
             };
 
             this.#replayHistory.push(replay);
+            this.#recordDuration = 0;
 
             const a = document.createElement("a");
             a.href = replay.objecturl;
