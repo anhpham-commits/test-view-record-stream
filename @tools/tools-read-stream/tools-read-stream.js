@@ -236,128 +236,48 @@ export default class LeanbotFarmRunStreamView{
         this.#updateQualityContent("");
     }
 
-    #measureQualityStats(stats) {
-        if (!stats || typeof stats.forEach !== "function") {
+    #measureQualityStats() {
+        if (!this.#qualitySamples || this.#qualitySamples.length < 2) {
             return null;
         }
 
-        const timestamp = performance.now();
+        const oldest = this.#qualitySamples[0];
+        const newest = this.#qualitySamples[this.#qualitySamples.length - 1];
 
-        let currentInbound = null;
-
-        stats.forEach(report => {
-            const isVideoInbound =
-                (report.type === "inbound-rtp" && report.kind === "video") ||
-                (report.type === "inbound-rtp" && report.mediaType === "video");
-
-            if (isVideoInbound) {
-                currentInbound = report;
-            }
-        });
-
-        if (!currentInbound) {
-            return null;
-        }
-
-        if (!this.#qualityStats.inbound_rtp) {
-            this.#qualityStats.inbound_rtp = currentInbound;
-            return null;
-        }
-
-        const prev = this.#qualityStats.inbound_rtp;
-        const timeDelta = (currentInbound.timestamp - prev.timestamp) / 1000;
+        const timeDelta = (newest.timestamp - oldest.timestamp) / 1000;
 
         if (!Number.isFinite(timeDelta) || timeDelta <= 0) {
-            this.#qualityStats.inbound_rtp = currentInbound;
             return null;
         }
 
-        const bytesDelta = currentInbound.bytesReceived - prev.bytesReceived;
-        const packetsLostDelta = currentInbound.packetsLost - prev.packetsLost;
-        const packetsReceivedDelta = currentInbound.packetsReceived - prev.packetsReceived;
-        const framesDecodedDelta = currentInbound.framesDecoded - prev.framesDecoded;
+        const bytesDelta = newest.bytesReceived - oldest.bytesReceived;
+        const packetsLostDelta = newest.packetsLost - oldest.packetsLost;
+        const packetsReceivedDelta = newest.packetsReceived - oldest.packetsReceived;
+        const framesDecodedDelta = newest.framesDecoded - oldest.framesDecoded;
 
         const bitrate = (bytesDelta * 8) / timeDelta / 1000;
-        const packetLoss = (packetsLostDelta + packetsReceivedDelta) > 0
-            ? packetsLostDelta / (packetsLostDelta + packetsReceivedDelta)
-            : 0;
-        const jitter = currentInbound.jitter * 1000;
+        // const packetLoss = (packetsLostDelta + packetsReceivedDelta) > 0
+        //     ? packetsLostDelta / (packetsLostDelta + packetsReceivedDelta)
+        //     : 0;
+        const jitter = newest.jitter * 1000;
         const framesDecodedPerSecond = framesDecodedDelta / timeDelta;
-        const isFrozen = bitrate > 10 && framesDecodedDelta === 0;
 
         const result = {
-            timestamp,
-            timeDelta,
             bitrate,
-            packetLoss,
+            packetsLostDelta,
+            packetsReceivedDelta,
             jitter,
             framesDecodedPerSecond,
-            isFrozen,
-            frameWidth: currentInbound.frameWidth,
-            frameHeight: currentInbound.frameHeight,
-            framesDropped_cumulative: currentInbound.framesDropped,
-            freezeCount_cumulative: currentInbound.freezeCount,
-            totalFreezesDuration_cumulative: currentInbound.totalFreezesDuration,
-            framesDecoded_cumulative: currentInbound.framesDecoded,
-            packetsReceived_cumulative: currentInbound.packetsReceived,
-            packetsLost_cumulative: currentInbound.packetsLost,
-            bytesReceived_cumulative: currentInbound.bytesReceived
-        };
-
-        this.#qualityStats.inbound_rtp = currentInbound;
-        return result;
-    }
-
-    #getQualityAverage() {
-        if (this.#qualitySamples.length === 0) {
-            return null;
-        }
-
-        const samples = this.#qualitySamples;
-
-        const measureStats = (key) => {
-            const values = samples
-                .map(sample => sample[key])
-                .filter(value => Number.isFinite(value));
-
-            if (values.length === 0) {
-                return {
-                    avg: null,
-                    min: null,
-                    max: null
-                };
-            }
-
-            return {
-                avg: values.reduce((sum, value) => sum + value, 0) / values.length,
-                min: Math.min(...values),
-                max: Math.max(...values)
-            };
-        };
-
-        const latest = samples[samples.length - 1];
-        const first = samples[0];
-
-        const result = {
-            measurementWindow: (latest.timestamp - first.timestamp) / 1000,
-            timeDelta: latest.timeDelta,
-            bitrate: measureStats("bitrate"),
-            packetLoss: measureStats("packetLoss"),
-            jitter: measureStats("jitter"),
-            framesDecodedPerSecond: measureStats("framesDecodedPerSecond"),
-            totalFrameDecoded: latest.framesDecoded_cumulative - first.framesDecoded_cumulative,
-
-            isFrozen: samples.some(sample => sample.isFrozen),
-
-            frameWidth: latest.frameWidth,
-            frameHeight: latest.frameHeight,
-            framesDropped_cumulative: latest.framesDropped_cumulative,
-            freezeCount_cumulative: latest.freezeCount_cumulative,
-            totalFreezesDuration_cumulative: latest.totalFreezesDuration_cumulative,
-            framesDecoded_cumulative: latest.framesDecoded_cumulative,
-            packetsReceived_cumulative: latest.packetsReceived_cumulative,
-            packetsLost_cumulative: latest.packetsLost_cumulative,
-            bytesReceived_cumulative: latest.bytesReceived_cumulative,
+            totalFrameDecoded: framesDecodedDelta,
+            frameWidth: newest.frameWidth,
+            frameHeight: newest.frameHeight,
+            framesDropped_cumulative: newest.framesDropped,
+            freezeCount_cumulative: newest.freezeCount,
+            totalFreezesDuration_cumulative: newest.totalFreezesDuration,
+            framesDecoded_cumulative: newest.framesDecoded,
+            packetsReceived_cumulative: newest.packetsReceived,
+            packetsLost_cumulative: newest.packetsLost,
+            bytesReceived_cumulative: newest.bytesReceived
         };
 
         return result;
@@ -367,9 +287,8 @@ export default class LeanbotFarmRunStreamView{
         if (!result) return "Waiting for stats...";
 
         const direct = [
-            `frameWidth: ${result.frameWidth} px`,
-            `frameHeight: ${result.frameHeight} px`,
-            // `jitter: ${result.jitter} ms`,
+            `frameResolution: ${result.frameWidth} x ${result.frameHeight} px`,
+            `jitter: ${result.jitter} ms`,
             `framesDropped_cumulative: ${result.framesDropped_cumulative} frames`,
             `freezeCount_cumulative: ${result.freezeCount_cumulative}`,
             `totalFreezesDuration_cumulative: ${result.totalFreezesDuration_cumulative} s`,
@@ -379,22 +298,11 @@ export default class LeanbotFarmRunStreamView{
             `bytesReceived_cumulative: ${result.bytesReceived_cumulative} bytes`
         ];
 
-        const fmt = (value) => value.toFixed(3).padStart(7);
-
-        const stat = (avg, min, max) =>
-            `avg ${fmt(avg)} | min ${fmt(min)} | max ${fmt(max)}`;
-
         const derived = [
-            `timeDelta               : ${result.timeDelta.toFixed(3)} s`,
-            `measurementWindow      : ${result.measurementWindow.toFixed(3)} s`,
             `totalFrameDecoded      : ${result.totalFrameDecoded} frames`,
-
-            `bitrate (Kbps)                 : ${stat(result.bitrate.avg, result.bitrate.min, result.bitrate.max)}`,
-            `packetLoss (%)                 : ${stat(result.packetLoss.avg, result.packetLoss.min, result.packetLoss.max)}`,
-            `framesDecodedPerSecond (fps)  : ${stat(result.framesDecodedPerSecond.avg, result.framesDecodedPerSecond.min, result.framesDecodedPerSecond.max)}`,
-            `jitter (ms)                    : ${stat(result.jitter.avg, result.jitter.min, result.jitter.max)}`,
-
-            `isFrozen               : ${result.isFrozen}`
+            `bitrate: ${result.bitrate.toFixed(3)} kbps`,
+            `packetLoss: ${result.packetsLostDelta} / ${result.packetsLostDelta + result.packetsReceivedDelta}`,
+            `framesDecodedPerSecond: ${result.framesDecodedPerSecond.toFixed(1)}`
         ];
 
         return direct.concat([""], derived).join("\n");
@@ -413,18 +321,29 @@ export default class LeanbotFarmRunStreamView{
         this.#qualityStatsInterval = setInterval(async () => {
             try {
                 const stats = await readerInstance.getStats();
-                const result = this.#measureQualityStats(stats);
+                if (!stats || typeof stats.forEach !== "function") return;
 
-                if (!result) return;
+                let newest = null;
+                stats.forEach(report => {
+                    const isVideoInbound =
+                        (report.type === "inbound-rtp" && report.kind === "video") ||
+                        (report.type === "inbound-rtp" && report.mediaType === "video");
 
-                this.#qualitySamples.push(result);
+                    if (isVideoInbound) {
+                        newest = report;
+                    }
+                });
 
-                if (this.#qualitySamples.length > 9) { // only keep most recent 9 last getStats(interval ~8s ~ 100 sample)
-                    this.#qualitySamples.shift();        // push out oldest sample
+                if (!newest) return;
+
+                this.#qualitySamples.push(newest);
+
+                if (this.#qualitySamples.length > 9) {
+                    this.#qualitySamples.shift();
                 }
 
-                const average = this.#getQualityAverage();
-                const formatted = this.#formatQualityStats(average);
+                const result = this.#measureQualityStats();
+                const formatted = this.#formatQualityStats(result);
 
                 this.#updateQualityContent(formatted);
             } catch (error) {

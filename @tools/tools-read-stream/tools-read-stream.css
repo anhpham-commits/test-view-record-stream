@@ -62,7 +62,7 @@
 .stream-quality-popup {
     position: absolute;
 
-    width: min(720px, 90vw);
+    width: min(560px, 90vw);
     max-height: 80vh;
 
     left: 50%;
