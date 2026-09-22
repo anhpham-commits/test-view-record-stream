@@ -356,10 +356,10 @@ export default class LeanbotFarmRunStreamView{
         ];
 
         const derived = [
-            `totalFrameDecoded: ${result.totalFrameDecoded} frames`,
-            `bitrate: ${result.bitrate.toFixed(3)} kbps`,
-            `packetLoss: ${result.packetsLostDelta} / ${result.packetsLostDelta + result.packetsReceivedDelta}`,
-            `framesDecodedPerSecond: ${result.framesDecodedPerSecond.toFixed(1)}`
+            `Bitrate`.padEnd(18) + `${result.bitrate.toFixed(0)} kbps`,
+            `Decoded FPS`.padEnd(18) + `${result.framesDecodedPerSecond.toFixed(2)}`,
+            `totalFrameDecoded`.padEnd(18) + `${result.totalFrameDecoded} frames`,
+            `packetLoss`.padEnd(18) + `${result.packetsLostDelta} / ${result.packetsLostDelta + result.packetsReceivedDelta}`
         ];
 
         return direct.concat([""], derived).join("\n");
