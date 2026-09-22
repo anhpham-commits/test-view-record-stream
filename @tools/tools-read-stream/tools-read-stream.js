@@ -238,11 +238,17 @@ export default class LeanbotFarmRunStreamView{
 
         const durationSpan = document.createElement("span");
         durationSpan.className = "replay-duration";
-        durationSpan.textContent = `${replay.duration.toFixed(3)} s`;
+
+        const totalSeconds = Math.floor(replay.duration);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        durationSpan.textContent =
+            `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
         const sizeSpan = document.createElement("span");
         sizeSpan.className = "replay-size";
-        sizeSpan.textContent = `${(replay.size / 1024).toFixed(3)} KB`;
+        sizeSpan.textContent = `${(replay.size / (1024 * 1024)).toFixed(2)} MB`;
 
         row.append(a, durationSpan, sizeSpan);
         this.#replayHistoryURLList.appendChild(row);
@@ -356,10 +362,10 @@ export default class LeanbotFarmRunStreamView{
         ];
 
         const derived = [
-            `Bitrate`.padEnd(18) + `${result.bitrate.toFixed(0)} kbps`,
-            `Decoded FPS`.padEnd(18) + `${result.framesDecodedPerSecond.toFixed(2)}`,
-            `Total Frame Decoded`.padEnd(18) + `${result.totalFrameDecoded} frames`,
-            `Packet Loss`.padEnd(18) + `${result.packetsLostDelta} / ${result.packetsLostDelta + result.packetsReceivedDelta}`
+            `Bitrate`.padEnd(24) + `${result.bitrate.toFixed(0)} kbps`,
+            `Decoded FPS`.padEnd(24) + `${result.framesDecodedPerSecond.toFixed(2)}`,
+            `Total Frame Decoded`.padEnd(24) + `${result.totalFrameDecoded} frames`,
+            `Packet Loss`.padEnd(24) + `${result.packetsLostDelta} / ${result.packetsLostDelta + result.packetsReceivedDelta}`
         ];
 
         return direct.concat([""], derived).join("\n");
