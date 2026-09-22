@@ -248,7 +248,7 @@ export default class LeanbotFarmRunStreamView{
 
         const sizeSpan = document.createElement("span");
         sizeSpan.className = "replay-size";
-        sizeSpan.textContent = `${(replay.size / (1024 * 1024)).toFixed(2)} MB`;
+        sizeSpan.textContent = `${(replay.size / 1024 / 1024).toFixed(2)} MB`;
 
         row.append(a, durationSpan, sizeSpan);
         this.#replayHistoryURLList.appendChild(row);
