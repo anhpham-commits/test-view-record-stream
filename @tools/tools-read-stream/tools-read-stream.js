@@ -344,22 +344,22 @@ export default class LeanbotFarmRunStreamView{
         if (!result) return "Waiting for stats...";
 
         const direct = [
-            `frameResolution: ${result.frameWidth} x ${result.frameHeight} px`,
-            `jitter: ${result.jitter} ms`,
-            `framesDropped_cumulative: ${result.framesDropped_cumulative} frames`,
-            `freezeCount_cumulative: ${result.freezeCount_cumulative}`,
-            `totalFreezesDuration_cumulative: ${result.totalFreezesDuration_cumulative} s`,
-            `framesDecoded_cumulative: ${result.framesDecoded_cumulative} frames`,
-            `packetsReceived_cumulative: ${result.packetsReceived_cumulative} packets`,
-            `packetsLost_cumulative: ${result.packetsLost_cumulative} packets`,
-            `bytesReceived_cumulative: ${result.bytesReceived_cumulative} bytes`
+            `Frame Resolution`.padEnd(24) + `${result.frameWidth} x ${result.frameHeight} px`,
+            `Jitter`.padEnd(24) + `${result.jitter} ms`,
+            `Frames Dropped`.padEnd(24) + `${result.framesDropped_cumulative} frames`,
+            `Freeze Count`.padEnd(24) + `${result.freezeCount_cumulative}`,
+            `Total Freeze Duration`.padEnd(24) + `${result.totalFreezesDuration_cumulative} s`,
+            `Frames Decoded`.padEnd(24) + `${result.framesDecoded_cumulative} frames`,
+            `Packets Received`.padEnd(24) + `${result.packetsReceived_cumulative} packets`,
+            `Packets Lost`.padEnd(24) + `${result.packetsLost_cumulative} packets`,
+            `Bytes Received`.padEnd(24) + `${result.bytesReceived_cumulative} bytes`
         ];
 
         const derived = [
             `Bitrate`.padEnd(18) + `${result.bitrate.toFixed(0)} kbps`,
             `Decoded FPS`.padEnd(18) + `${result.framesDecodedPerSecond.toFixed(2)}`,
-            `totalFrameDecoded`.padEnd(18) + `${result.totalFrameDecoded} frames`,
-            `packetLoss`.padEnd(18) + `${result.packetsLostDelta} / ${result.packetsLostDelta + result.packetsReceivedDelta}`
+            `Total Frame Decoded`.padEnd(18) + `${result.totalFrameDecoded} frames`,
+            `Packet Loss`.padEnd(18) + `${result.packetsLostDelta} / ${result.packetsLostDelta + result.packetsReceivedDelta}`
         ];
 
         return direct.concat([""], derived).join("\n");
