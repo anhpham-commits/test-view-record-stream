@@ -239,7 +239,7 @@ export default class LeanbotFarmRunStreamView{
         const durationSpan = document.createElement("span");
         durationSpan.className = "replay-duration";
 
-        const totalSeconds = Math.floor(replay.duration);
+        const totalSeconds = Math.round(replay.duration);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
 
