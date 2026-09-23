@@ -96,15 +96,19 @@ btnRecordStart.addEventListener("click", async () => {
 });
 
 btnRecordStop.addEventListener("click", async () => {
-    await streamView.recordStop();
+    await finishRecording();
     btnRecordStart.disabled = false;
     btnRecordStop.disabled = true;
-    btnHistory.disabled  = false;
 });
 
 btnHistory.addEventListener("click", async () => {
     streamView.showRelayList();
 });
+
+async function finishRecording() {
+    await streamView.recordStop();
+    btnHistory.disabled = false;
+}
 
 /* =========================================================
    CONNECT / DISCONNECT (WebRTC WHEP)
@@ -120,7 +124,7 @@ btnConnect.addEventListener("click", () => {
 
 async function disconnect() {
     if (streamView.isRecording()) {
-        await streamView.recordStop();
+        await finishRecording();
     }
 
     btnRecordStart.disabled = true;
@@ -153,6 +157,6 @@ function connect() {
 
 globalThis.addEventListener("beforeunload", () => {
     if (streamView.isRecording()) {
-        streamView.recordStop();
+        finishRecording();
     }
 });
