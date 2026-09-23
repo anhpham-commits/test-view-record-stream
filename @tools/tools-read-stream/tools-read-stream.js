@@ -279,9 +279,9 @@ export default class LeanbotFarmRunStreamView{
         document.body.style.overflow = "";
     }
 
-    getStreamReader(){
-        return this.#reader;
-    }
+    // getStreamReader(){
+    //     return this.#reader;
+    // }
 
     #setVideoView(view) {
         this.#remoteVideo.style.display = view === "video" ? "block" : "none";
