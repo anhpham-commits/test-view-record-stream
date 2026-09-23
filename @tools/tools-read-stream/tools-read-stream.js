@@ -249,6 +249,8 @@ export default class LeanbotFarmRunStreamView{
         const sizeSpan = document.createElement("span");
         sizeSpan.className = "replay-size";
         const replaySize = new Blob([JSON.stringify(replay)]).size;
+        console.log("[REPLAY] Entry:", replay);
+        console.log("[REPLAY] Serialized JSON size:", replaySize, "bytes");
         sizeSpan.textContent = `${(replaySize / 1024 / 1024).toFixed(2)} MB`;
         // sizeSpan.textContent = `${(replay.size / 1024 / 1024).toFixed(2)} MB`;
 
