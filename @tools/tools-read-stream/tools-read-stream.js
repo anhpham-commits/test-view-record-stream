@@ -734,9 +734,9 @@ export default class LeanbotFarmRunStreamView{
         const replay = {
             objecturl: objecturl,
             startTimeStamp: this.#recordStartTimeStamp,
-            filename: file.name,
+            // filename: file.name,
             duration: this.#recordDuration,
-            size: file.size
+            // size: file.size
         };
 
         this.#replayHistory.push(replay);
