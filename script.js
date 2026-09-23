@@ -11,10 +11,6 @@ const btnRecordStart = document.getElementById("btnRecordStart");
 const btnRecordStop = document.getElementById("btnRecordStop");
 const btnHistory = document.getElementById("btnHistory");
 
-btnRecordStart.disabled = true;
-btnRecordStop.disabled = true;
-btnHistory.disabled = true;
-
 const streamView = new LeanbotFarmRunStreamView("video", {
     controls: true,
     autoplay: true,
@@ -91,7 +87,6 @@ statsButton.addEventListener("click", () => {
 
 btnRecordStart.addEventListener("click", async () => {
     btnRecordStart.disabled = true;
-    btnHistory.disabled = true;
     const result = await streamView.recordStart();
     if(!result.success){
         btnRecordStart.disabled = false;
